@@ -54,20 +54,6 @@ class InitBlocks
 
             $db = Database::getInstance()->getConnection();
             
-            // Créer l'utilisateur système s'il n'existe pas
-            $checkUserSql = "SELECT id FROM users WHERE name = 'SYSTEM' LIMIT 1";
-            $checkUserStmt = $db->query($checkUserSql);
-            $systemUser = $checkUserStmt->fetch(PDO::FETCH_ASSOC);
-            
-            if (!$systemUser) {
-                $createUserSql = "INSERT INTO users (name, email) VALUES ('SYSTEM', 'system@blockchain.local')";
-                $db->exec($createUserSql);
-                $systemUserId = $db->lastInsertId();
-                Logger::info('System user created', ['id' => $systemUserId]);
-            } else {
-                $systemUserId = $systemUser['id'];
-            }
-            
             // Créer les données d'allocation dans le bloc Genesis
             $allocationData = [
                 'type' => 'genesis_allocation',

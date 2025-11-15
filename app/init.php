@@ -16,11 +16,15 @@
 require_once __DIR__ . '/vendor/autoload.php';
 
 // Load init files manually
+require_once __DIR__ . '/src/init/00_reset.php';
 require_once __DIR__ . '/src/init/01_blocks.php';
+require_once __DIR__ . '/src/init/02_wallets_sync.php';
 
 use App\Config\Database;
 use App\Lib\Logger;
+use App\Init\InitReset;
 use App\Init\InitBlocks;
+use App\Init\InitWalletsSync;
 use App\Init\InitWallets;
 
 // Initialize logger
@@ -38,7 +42,9 @@ try {
 
     // Execute initialization steps in order
     $steps = [
+        ['class' => InitReset::class, 'name' => 'Reset'],
         ['class' => InitBlocks::class, 'name' => 'Blocks'],
+        ['class' => InitWalletsSync::class, 'name' => 'Wallets Sync'],
     ];
 
     foreach ($steps as $step) {
