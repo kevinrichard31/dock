@@ -154,6 +154,7 @@
 
         <div class="footer">
             <p>Système Blockchain v1.0 - Tous droits réservés</p>
+            <p style="font-size: 0.9em; margin-top: 10px; color: #999;">Dédicace à Barthivan, Hisa et Yonek 🙏</p>
         </div>
     </div>
 </body>
