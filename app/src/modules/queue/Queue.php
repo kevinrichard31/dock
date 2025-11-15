@@ -8,12 +8,12 @@
 namespace App\Modules\Queue;
 
 use App\Config\Database;
+use App\Lib\Logger;
 use PDO;
 
 class Queue
 {
     private int $id;
-    private int $transactionId;
     private string $fromAddress;
     private string $toAddress;
     private float $amount;
@@ -23,7 +23,6 @@ class Queue
     private int $timestamp;
 
     public function __construct(
-        int $transactionId,
         string $fromAddress,
         string $toAddress,
         float $amount,
@@ -34,7 +33,6 @@ class Queue
         int $id = 0
     ) {
         $this->id = $id;
-        $this->transactionId = $transactionId;
         $this->fromAddress = $fromAddress;
         $this->toAddress = $toAddress;
         $this->amount = $amount;
@@ -47,11 +45,6 @@ class Queue
     public function getId(): int
     {
         return $this->id;
-    }
-
-    public function getTransactionId(): int
-    {
-        return $this->transactionId;
     }
 
     public function getFromAddress(): string
@@ -106,21 +99,45 @@ class Queue
 
             if ($this->id > 0) {
                 // Update
+                Logger::info('Updating queue item', ['id' => $this->id]);
                 $sql = "UPDATE queue SET status = :status, block_index = :block_index, 
                         updated_at = CURRENT_TIMESTAMP WHERE id = :id";
                 $stmt = $db->prepare($sql);
-                return $stmt->execute([
+                $result = $stmt->execute([
                     ':status' => $this->status,
                     ':block_index' => $this->blockIndex,
                     ':id' => $this->id
                 ]);
+                
+                if (!$result) {
+                    Logger::error('Failed to update queue item', [
+                        'id' => $this->id,
+                        'error' => $stmt->errorInfo()
+                    ]);
+                }
+                
+                return $result;
             } else {
                 // Insert
-                $sql = "INSERT INTO queue (transaction_id, from_address, to_address, amount, hash, status, block_index, timestamp) 
-                        VALUES (:transaction_id, :from_address, :to_address, :amount, :hash, :status, :block_index, :timestamp)";
+                Logger::info('Inserting new queue item', [
+                    'from' => substr($this->fromAddress, 0, 20) . '...',
+                    'to' => substr($this->toAddress, 0, 20) . '...',
+                    'amount' => $this->amount,
+                    'hash' => substr($this->hash, 0, 20) . '...'
+                ]);
+                
+                $sql = "INSERT INTO queue (from_address, to_address, amount, hash, status, block_index, timestamp) 
+                        VALUES (:from_address, :to_address, :amount, :hash, :status, :block_index, :timestamp)";
                 $stmt = $db->prepare($sql);
+                
+                if (!$stmt) {
+                    Logger::error('Failed to prepare insert statement', [
+                        'error' => $db->errorInfo()
+                    ]);
+                    return false;
+                }
+                
                 $result = $stmt->execute([
-                    ':transaction_id' => $this->transactionId,
                     ':from_address' => $this->fromAddress,
                     ':to_address' => $this->toAddress,
                     ':amount' => $this->amount,
@@ -129,14 +146,31 @@ class Queue
                     ':block_index' => $this->blockIndex,
                     ':timestamp' => $this->timestamp
                 ]);
-
-                if ($result) {
-                    $this->id = (int)$db->lastInsertId();
+                
+                if (!$result) {
+                    Logger::error('Failed to insert queue item', [
+                        'error' => $stmt->errorInfo(),
+                        'from_address' => substr($this->fromAddress, 0, 20) . '...',
+                        'to_address' => substr($this->toAddress, 0, 20) . '...',
+                        'amount' => $this->amount,
+                        'hash' => substr($this->hash, 0, 20) . '...',
+                        'status' => $this->status,
+                        'block_index' => $this->blockIndex,
+                        'timestamp' => $this->timestamp
+                    ]);
+                    return false;
                 }
+                
+                $this->id = (int)$db->lastInsertId();
+                Logger::success('Queue item inserted', ['id' => $this->id]);
 
                 return $result;
             }
         } catch (\Exception $e) {
+            Logger::error('Exception in Queue::save()', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return false;
         }
     }
@@ -152,7 +186,6 @@ class Queue
 
             if ($row) {
                 return new self(
-                    (int)$row['transaction_id'],
                     $row['from_address'],
                     $row['to_address'],
                     (float)$row['amount'],
@@ -181,7 +214,6 @@ class Queue
 
             if ($row) {
                 return new self(
-                    (int)$row['transaction_id'],
                     $row['from_address'],
                     $row['to_address'],
                     (float)$row['amount'],
@@ -210,7 +242,6 @@ class Queue
             $queue = [];
             foreach ($rows as $row) {
                 $queue[] = new self(
-                    (int)$row['transaction_id'],
                     $row['from_address'],
                     $row['to_address'],
                     (float)$row['amount'],
@@ -240,7 +271,6 @@ class Queue
             $queue = [];
             foreach ($rows as $row) {
                 $queue[] = new self(
-                    (int)$row['transaction_id'],
                     $row['from_address'],
                     $row['to_address'],
                     (float)$row['amount'],
@@ -262,7 +292,6 @@ class Queue
     {
         return [
             'id' => $this->id,
-            'transaction_id' => $this->transactionId,
             'from_address' => $this->fromAddress,
             'to_address' => $this->toAddress,
             'amount' => $this->amount,

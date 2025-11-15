@@ -9,6 +9,7 @@
 namespace App\Modules\Queue;
 
 use App\Config\Database;
+use App\Modules\Queue\Queue;
 use App\Modules\Crypto\Crypto;
 use App\Modules\Crypto\SignatureManager;
 use App\Lib\Logger;
@@ -17,7 +18,6 @@ use PDO;
 class QueueManager
 {
     public static function addToQueue(
-        int $transactionId,
         string $fromAddress,
         string $toAddress,
         float $amount,
@@ -25,7 +25,8 @@ class QueueManager
         int $timestamp,
         ?int $blockIndex = null,
         ?string $signature = null,
-        ?string $publicKey = null
+        ?string $publicKey = null,
+        ?string $type = null
     ): ?Queue {
         try {
             // Vérifier si la transaction est déjà dans la queue
@@ -33,20 +34,29 @@ class QueueManager
                 return null;
             }
 
-            // Vérifier la signature si fournie
+            // Vérifier la signature selon le type
             if ($signature && $publicKey) {
-                if (!self::verifyTransactionSignature($fromAddress, $toAddress, $amount, $timestamp, $signature, $publicKey)) {
+                $transactionData = [
+                    'from' => $fromAddress,
+                    'to' => $toAddress,
+                    'amount' => $amount,
+                    'timestamp' => $timestamp,
+                    'public_key' => $publicKey,
+                    'signature' => $signature
+                ];
+                
+                if (!SignatureManager::verifySignatureByType($transactionData, $signature, $publicKey, $type)) {
                     Logger::warning('Invalid transaction signature', [
                         'from' => $fromAddress,
                         'to' => $toAddress,
-                        'hash' => $hash
+                        'hash' => $hash,
+                        'type' => $type
                     ]);
                     return null;
                 }
             }
 
             $queueItem = new Queue(
-                $transactionId,
                 $fromAddress,
                 $toAddress,
                 $amount,
@@ -190,7 +200,6 @@ class QueueManager
 
             if ($row) {
                 $queueItem = new Queue(
-                    (int)$row['transaction_id'],
                     $row['from_address'],
                     $row['to_address'],
                     (float)$row['amount'],

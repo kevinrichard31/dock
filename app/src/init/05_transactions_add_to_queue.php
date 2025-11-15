@@ -2,19 +2,20 @@
 
 /**
  * 05_transactions_add_to_queue.php
- * ÉTAPE 5: Extraire les transactions de la blockchain et les ajouter à la queue
+ * ÉTAPE 5: Extraire les données de transactions de la blockchain et les ajouter à la queue
  * 
  * Cette étape:
  * - Parcourt tous les blocs de la blockchain
- * - Extrait toutes les transactions
- * - Les ajoute à la table transactions
+ * - Extrait toutes les données de transactions (standards, allocations genesis, enregistrements validateurs)
  * - Les ajoute à la queue pour traitement
+ * 
+ * Note: Les transactions ne sont PAS créées dans cette étape.
+ * Elles seront créées lors du traitement de la queue (étape 6).
  */
 
 namespace App\Init;
 
 use App\Config\Database;
-use App\Modules\Transaction\TransactionManager;
 use App\Modules\Queue\QueueManager;
 use App\Modules\Crypto\Crypto;
 use App\Modules\Crypto\SignatureManager;
@@ -70,58 +71,50 @@ class InitTransactionsAddToQueue
                                 $timestamp
                             );
 
-                            // Vérifier si la transaction existe déjà
-                            if (TransactionManager::transactionExists($hash)) {
+                            // Vérifier si déjà dans la queue
+                            if (QueueManager::existsInQueue($hash)) {
                                 $skippedCount++;
-                                Logger::debug('Transaction already exists', [
+                                Logger::debug('Transaction already in queue', [
                                     'hash' => substr($hash, 0, 20) . '...'
                                 ]);
                                 continue;
                             }
 
-                            // Créer la transaction
-                            $transaction = TransactionManager::createTransaction(
+                            $extractedCount++;
+                            
+                            Logger::info('Transaction extracted', [
+                                'from' => substr($fromAddress, 0, 20) . '...',
+                                'to' => substr($toAddress, 0, 20) . '...',
+                                'amount' => $amount,
+                                'hash' => substr($hash, 0, 20) . '...',
+                                'block_index' => $blockIndex
+                            ]);
+
+                            // Ajouter à la queue sans créer la transaction (sera créée dans queue_process)
+                            $queueItem = QueueManager::addToQueue(
                                 $fromAddress,
                                 $toAddress,
                                 $amount,
                                 $hash,
                                 $timestamp,
-                                $blockIndex
+                                $blockIndex,
+                                $signature,
+                                $publicKey,
+                                'transaction'
                             );
 
-                            if ($transaction) {
-                                $extractedCount++;
-                                $transactionId = $transaction->getId();
-                                
-                                Logger::info('Transaction extracted', [
-                                    'from' => substr($fromAddress, 0, 20) . '...',
-                                    'to' => substr($toAddress, 0, 20) . '...',
-                                    'amount' => $amount,
+                            //logger l'ajout à la queue
+                            Logger::info('Transaction added to queue', [
+                                'hash' => substr($hash, 0, 20) . '...',
+                                'signed' => !empty($signature)
+                            ]);
+
+                            if ($queueItem) {
+                                $queuedCount++;
+                                Logger::info('Transaction added to queue', [
                                     'hash' => substr($hash, 0, 20) . '...',
-                                    'block_index' => $blockIndex
+                                    'signed' => !empty($signature)
                                 ]);
-
-                                // Ajouter à la queue avec signature
-                                $queueItem = QueueManager::addToQueue(
-                                    $transactionId,
-                                    $fromAddress,
-                                    $toAddress,
-                                    $amount,
-                                    $hash,
-                                    $timestamp,
-                                    $blockIndex,
-                                    $signature,
-                                    $publicKey
-                                );
-
-                                if ($queueItem) {
-                                    $queuedCount++;
-                                    Logger::info('Transaction added to queue', [
-                                        'transaction_id' => $transactionId,
-                                        'hash' => substr($hash, 0, 20) . '...',
-                                        'signed' => !empty($signature)
-                                    ]);
-                                }
                             }
                         }
 
@@ -142,55 +135,41 @@ class InitTransactionsAddToQueue
                                     'genesis_allocation'
                                 );
 
-                                // Vérifier si la transaction existe déjà
-                                if (TransactionManager::transactionExists($hash)) {
+                                // Vérifier si déjà dans la queue
+                                if (QueueManager::existsInQueue($hash)) {
                                     $skippedCount++;
                                     continue;
                                 }
 
-                                // Créer la transaction d'allocation
-                                $transaction = TransactionManager::createTransaction(
+                                $extractedCount++;
+                                
+                                Logger::info('Genesis allocation extracted', [
+                                    'from' => substr($fromAddress, 0, 20) . '...',
+                                    'to' => substr($toAddress, 0, 20) . '...',
+                                    'amount' => $amount,
+                                    'hash' => substr($hash, 0, 20) . '...',
+                                    'block_index' => $blockIndex
+                                ]);
+
+                                // Ajouter à la queue sans créer la transaction (sera créée dans queue_process)
+                                $queueItem = QueueManager::addToQueue(
                                     $fromAddress,
                                     $toAddress,
                                     $amount,
                                     $hash,
                                     $timestamp,
-                                    $blockIndex
+                                    $blockIndex,
+                                    $signature,
+                                    $publicKey,
+                                    'genesis_allocation'
                                 );
 
-                                if ($transaction) {
-                                    $extractedCount++;
-                                    $transactionId = $transaction->getId();
-                                    
-                                    Logger::info('Genesis allocation extracted', [
-                                        'from' => substr($fromAddress, 0, 20) . '...',
-                                        'to' => substr($toAddress, 0, 20) . '...',
-                                        'amount' => $amount,
+                                if ($queueItem) {
+                                    $queuedCount++;
+                                    Logger::info('Genesis transaction added to queue', [
                                         'hash' => substr($hash, 0, 20) . '...',
-                                        'block_index' => $blockIndex
+                                        'signed' => !empty($signature)
                                     ]);
-
-                                    // Ajouter à la queue avec signature
-                                    $queueItem = QueueManager::addToQueue(
-                                        $transactionId,
-                                        $fromAddress,
-                                        $toAddress,
-                                        $amount,
-                                        $hash,
-                                        $timestamp,
-                                        $blockIndex,
-                                        $signature,
-                                        $publicKey
-                                    );
-
-                                    if ($queueItem) {
-                                        $queuedCount++;
-                                        Logger::info('Genesis transaction added to queue', [
-                                            'transaction_id' => $transactionId,
-                                            'hash' => substr($hash, 0, 20) . '...',
-                                            'signed' => !empty($signature)
-                                        ]);
-                                    }
                                 }
                             }
                         }
@@ -211,64 +190,50 @@ class InitTransactionsAddToQueue
                                 'validator_registration'
                             );
 
-                            // Vérifier si la transaction existe déjà
-                            if (TransactionManager::transactionExists($hash)) {
+                            // Vérifier si déjà dans la queue
+                            if (QueueManager::existsInQueue($hash)) {
                                 $skippedCount++;
                                 continue;
                             }
 
-                            // Créer la transaction d'enregistrement
-                            $transaction = TransactionManager::createTransaction(
+                            $extractedCount++;
+                            
+                            Logger::info('Validator registration extracted', [
+                                'public_key' => substr($fromAddress, 0, 20) . '...',
+                                'collateral' => $amount,
+                                'hash' => substr($hash, 0, 20) . '...',
+                                'block_index' => $blockIndex
+                            ]);
+
+                            // Ajouter à la queue sans créer la transaction (sera créée dans queue_process)
+                            $queueItem = QueueManager::addToQueue(
                                 $fromAddress,
                                 $toAddress,
                                 $amount,
                                 $hash,
                                 $timestamp,
-                                $blockIndex
+                                $blockIndex,
+                                $signature,
+                                $publicKey,
+                                'validator_registration'
                             );
 
-                            if ($transaction) {
-                                $extractedCount++;
-                                $transactionId = $transaction->getId();
-                                
-                                Logger::info('Validator registration extracted', [
-                                    'public_key' => substr($fromAddress, 0, 20) . '...',
-                                    'collateral' => $amount,
+                            if ($queueItem) {
+                                $queuedCount++;
+                                Logger::info('Validator registration added to queue', [
                                     'hash' => substr($hash, 0, 20) . '...',
-                                    'block_index' => $blockIndex
+                                    'signed' => !empty($signature)
                                 ]);
-
-                                // Ajouter à la queue avec signature
-                                $queueItem = QueueManager::addToQueue(
-                                    $transactionId,
-                                    $fromAddress,
-                                    $toAddress,
-                                    $amount,
-                                    $hash,
-                                    $timestamp,
-                                    $blockIndex,
-                                    $signature,
-                                    $publicKey
-                                );
-
-                                if ($queueItem) {
-                                    $queuedCount++;
-                                    Logger::info('Validator registration added to queue', [
-                                        'transaction_id' => $transactionId,
-                                        'hash' => substr($hash, 0, 20) . '...',
-                                        'signed' => !empty($signature)
-                                    ]);
-                                }
                             }
                         }
                     }
                 }
             }
 
-            Logger::success('Transactions extracted and queued successfully', [
+            Logger::success('Transaction data extracted and queued successfully', [
                 'total_blocks' => count($blocks),
-                'transactions_extracted' => $extractedCount,
-                'transactions_queued' => $queuedCount,
+                'data_extracted' => $extractedCount,
+                'items_queued' => $queuedCount,
                 'skipped' => $skippedCount
             ]);
 

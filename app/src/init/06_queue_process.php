@@ -6,6 +6,7 @@
  * 
  * Cette étape:
  * - Traite tous les items en attente dans la queue
+ * - Crée les transactions dans la base de données (table transactions)
  * - Valide et traite chaque transaction
  * - Met à jour le statut de chaque item
  */
@@ -15,6 +16,7 @@ namespace App\Init;
 use App\Config\Database;
 use App\Modules\Queue\Queue;
 use App\Modules\Queue\QueueManager;
+use App\Modules\Transaction\TransactionManager;
 use App\Lib\Logger;
 use PDO;
 
@@ -45,32 +47,83 @@ class InitQueueProcess
 
             foreach ($pendingItems as $queueItem) {
                 $queueId = $queueItem->getId();
-                $transactionId = $queueItem->getTransactionId();
                 $fromAddress = $queueItem->getFromAddress();
                 $toAddress = $queueItem->getToAddress();
                 $amount = $queueItem->getAmount();
                 $hash = $queueItem->getHash();
                 $blockIndex = $queueItem->getBlockIndex();
+                $timestamp = $queueItem->getTimestamp();
 
                 Logger::info('Processing queue item', [
                     'queue_id' => $queueId,
-                    'transaction_id' => $transactionId,
                     'from' => substr($fromAddress, 0, 20) . '...',
                     'to' => substr($toAddress, 0, 20) . '...',
                     'amount' => $amount
                 ]);
 
                 try {
-                    Logger::info('Before setStatus', ['queue_id' => $queueId]);
+                    // ÉTAPE 1: Créer la transaction si elle n'existe pas déjà
+                    // Vérifier si la transaction existe déjà dans la base
+                    if (TransactionManager::transactionExists($hash)) {
+                        Logger::warning('Transaction already exists in database, skipping creation', [
+                            'hash' => substr($hash, 0, 20) . '...'
+                        ]);
+                        
+                        // Marquer comme échouée car doublon
+                        $failSql = "UPDATE queue SET status = 'failed' WHERE id = :id";
+                        $failStmt = $db->prepare($failSql);
+                        $failStmt->execute([':id' => $queueId]);
+                        $failedCount++;
+                        continue;
+                    }
+
+                    // Créer la transaction
+                    Logger::info('Creating transaction', [
+                        'from' => substr($fromAddress, 0, 20) . '...',
+                        'to' => substr($toAddress, 0, 20) . '...',
+                        'amount' => $amount,
+                        'hash' => substr($hash, 0, 20) . '...'
+                    ]);
+
+                    $transaction = TransactionManager::createTransaction(
+                        $fromAddress,
+                        $toAddress,
+                        $amount,
+                        $hash,
+                        $timestamp,
+                        $blockIndex
+                    );
+
+                    if (!$transaction) {
+                        Logger::error('Failed to create transaction', [
+                            'hash' => substr($hash, 0, 20) . '...'
+                        ]);
+
+                        // Marquer comme échouée
+                        $failSql = "UPDATE queue SET status = 'failed' WHERE id = :id";
+                        $failStmt = $db->prepare($failSql);
+                        $failStmt->execute([':id' => $queueId]);
+                        $failedCount++;
+                        continue;
+                    }
+
+                    $transactionId = $transaction->getId();
                     
-                    // Mettre à jour directement dans la base de données sans utiliser l'objet
+                    Logger::success('Transaction created', [
+                        'transaction_id' => $transactionId,
+                        'hash' => substr($hash, 0, 20) . '...'
+                    ]);
+
+                    // ÉTAPE 2: Mettre à jour le statut à processing
+                    Logger::info('Updating queue item status to processing', ['queue_id' => $queueId]);
+                    
                     $updateSql = "UPDATE queue SET status = 'processing' WHERE id = :id";
                     $updateStmt = $db->prepare($updateSql);
                     $updateResult = $updateStmt->execute([':id' => $queueId]);
                     
-                    Logger::info('After DB update', ['queue_id' => $queueId, 'result' => $updateResult]);
+                    Logger::info('Queue item status updated', ['queue_id' => $queueId, 'result' => $updateResult]);
 
-                    // Valider la transaction inline
+                    // ÉTAPE 3: Valider la transaction
                     Logger::info('Validating transaction', ['from' => substr($fromAddress, 0, 20) . '...']);
                     
                     $isValid = !empty($fromAddress) && !empty($toAddress) && $amount > 0 && !empty($hash) && strlen($hash) >= 32;
@@ -95,7 +148,7 @@ class InitQueueProcess
 
                     Logger::info('Before apply transaction', ['queue_id' => $queueId]);
                     
-                    // Appliquer la transaction (mise à jour des soldes, etc.)
+                    // ÉTAPE 4: Appliquer la transaction (mise à jour des soldes, etc.)
                     $applied = true; // Pour le moment, accepter toutes les transactions valides
                     
                     Logger::info('After apply transaction', ['queue_id' => $queueId, 'applied' => $applied]);
@@ -116,7 +169,7 @@ class InitQueueProcess
                         continue;
                     }
 
-                    // Supprimer de la queue une fois complétée
+                    // ÉTAPE 5: Supprimer de la queue une fois complétée
                     $deleteSql = "DELETE FROM queue WHERE id = :id";
                     $deleteStmt = $db->prepare($deleteSql);
                     $deleteStmt->execute([':id' => $queueId]);
@@ -132,7 +185,6 @@ class InitQueueProcess
                 } catch (\Exception $e) {
                     Logger::error('Error processing queue item', [
                         'queue_id' => $queueId,
-                        'transaction_id' => $transactionId,
                         'error' => $e->getMessage()
                     ]);
 

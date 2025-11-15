@@ -220,9 +220,42 @@ class SignatureManager
     }
 
     /**
+     * Verify signature based on transaction type
+     * Different types have different verification requirements
+     * 
+     * @param array $data The data to verify
+     * @param string $signature The signature
+     * @param string $publicKey The public key
+     * @param string $type The transaction type
+     * @return bool True if signature is valid or verification should be skipped for this type
+     */
+    public static function verifySignatureByType(array $data, string $signature, string $publicKey, ?string $type): bool
+    {
+        switch ($type) {
+            case 'validator_registration':
+                // Validator registrations use their own canonical format
+                // They are verified when added to blocks, not when queued
+                Logger::debug('Skipping signature verification for validator_registration');
+                return true;
+                
+            case 'genesis_allocation':
+                // Genesis allocations are from the genesis block, already verified
+                Logger::debug('Skipping signature verification for genesis_allocation');
+                return true;
+                
+            case 'transaction':
+            default:
+                // Regular transactions need signature verification
+                Logger::debug('Verifying signature for transaction', ['type' => $type]);
+                return self::verifyTransaction($data);
+        }
+    }
+
+    /**
      * Get validator IP address
      * Returns the public IPv4 address visible on the network
      */
+
     private static function getPublicIp(): string
     {
         // Try to get public IP from ipify API
