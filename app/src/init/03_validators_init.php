@@ -69,7 +69,7 @@ class InitValidators
                 'type' => 'validator_registration',
                 'description' => 'Creator registered as validator',
                 'public_key' => $publicKey,
-                'ip' => $validatorIp,
+                'ip_address' => $validatorIp,
                 'collateral' => 10000,
                 'is_approved' => 1
             ];
@@ -78,7 +78,7 @@ class InitValidators
             $dataToSign = json_encode([
                 'type' => $validatorRegistrationData['type'],
                 'public_key' => $validatorRegistrationData['public_key'],
-                'ip' => $validatorRegistrationData['ip'],
+                'ip_address' => $validatorRegistrationData['ip_address'],
                 'collateral' => $validatorRegistrationData['collateral']
             ]);
             
@@ -102,13 +102,13 @@ class InitValidators
             ]);
 
             // Enregistrer le validateur dans la base de données
-            $validatorSql = "INSERT INTO validators (public_key, ip, collateral, status, is_approved) 
-                             VALUES (:public_key, :ip, :collateral, 'active', :is_approved)
-                             ON DUPLICATE KEY UPDATE ip = VALUES(ip), collateral = VALUES(collateral), is_approved = VALUES(is_approved)";
+            $validatorSql = "INSERT INTO validators (public_key, ip_address, collateral, is_approved) 
+                             VALUES (:public_key, :ip_address, :collateral, :is_approved)
+                             ON DUPLICATE KEY UPDATE ip_address = VALUES(ip_address), collateral = VALUES(collateral), is_approved = VALUES(is_approved)";
             $validatorStmt = $db->prepare($validatorSql);
             $validatorStmt->execute([
                 ':public_key' => $publicKey,
-                ':ip' => $validatorIp,
+                ':ip_address' => $validatorIp,
                 ':collateral' => 10000,
                 ':is_approved' => 1
             ]);

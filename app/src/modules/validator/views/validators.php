@@ -223,8 +223,8 @@
         
         <div class="stats">
             <div class="stat-card">
-                <div class="value" id="active-count">0</div>
-                <div class="label">Active Validators</div>
+                <div class="value" id="total-count">0</div>
+                <div class="label">Total Validators</div>
             </div>
             <div class="stat-card">
                 <div class="value" id="approved-count">0</div>
@@ -243,7 +243,7 @@
         <div class="content">
             <!-- Current Validators -->
             <div class="section">
-                <h2>👥 Active Validators</h2>
+                <h2>👥 All Validators</h2>
                 <div class="info-box">
                     <strong>Current Collateral Required:</strong>
                     10,000 coins per validator
@@ -295,7 +295,7 @@
                 const statsData = await statsResponse.json();
                 
                 if (statsData.success) {
-                    document.getElementById('active-count').textContent = statsData.data.active;
+                    document.getElementById('total-count').textContent = statsData.data.total;
                     document.getElementById('approved-count').textContent = statsData.data.approved;
                     document.getElementById('pending-count').textContent = statsData.data.pending;
                     document.getElementById('total-collateral').textContent = 

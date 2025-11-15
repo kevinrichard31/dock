@@ -9,8 +9,8 @@ class Validator
 {
     private string $publicKey;
     private float $collateral;
-    private string $status;
     private int $isApproved;
+    private string $ipAddress;
     private int $createdAt;
     private int $updatedAt;
 
@@ -20,13 +20,13 @@ class Validator
     public function __construct(
         string $publicKey,
         float $collateral = self::COLLATERAL_AMOUNT,
-        string $status = 'active',
-        int $isApproved = 0
+        int $isApproved = 0,
+        string $ipAddress = ''
     ) {
         $this->publicKey = $publicKey;
         $this->collateral = $collateral;
-        $this->status = $status;
         $this->isApproved = $isApproved;
+        $this->ipAddress = $ipAddress;
         $this->createdAt = time();
         $this->updatedAt = time();
     }
@@ -38,12 +38,12 @@ class Validator
     {
         $db = Database::getInstance()->getConnection();
         
-        $sql = "INSERT INTO validators (public_key, collateral, status, is_approved) 
-                VALUES (:public_key, :collateral, :status, :is_approved)
+        $sql = "INSERT INTO validators (public_key, collateral, is_approved, ip) 
+                VALUES (:public_key, :collateral, :is_approved, :ip)
                 ON DUPLICATE KEY UPDATE 
                 collateral = VALUES(collateral),
-                status = VALUES(status),
                 is_approved = VALUES(is_approved),
+                ip = VALUES(ip),
                 updated_at = CURRENT_TIMESTAMP";
         
         $stmt = $db->prepare($sql);
@@ -51,8 +51,8 @@ class Validator
         return $stmt->execute([
             ':public_key' => $this->publicKey,
             ':collateral' => $this->collateral,
-            ':status' => $this->status,
-            ':is_approved' => $this->isApproved
+            ':is_approved' => $this->isApproved,
+            ':ip' => $this->ipAddress
         ]);
     }
 
@@ -75,8 +75,8 @@ class Validator
         $validator = new self(
             $record['public_key'],
             (float)$record['collateral'],
-            $record['status'],
-            (int)$record['is_approved']
+            (int)$record['is_approved'],
+            $record['ip'] ?? ''
         );
         
         $validator->createdAt = strtotime($record['created_at']);
@@ -86,12 +86,12 @@ class Validator
     }
 
     /**
-     * Get all active validators
+     * Get all validators
      */
-    public static function getActiveValidators(): array
+    public static function getAllValidators(): array
     {
         $db = Database::getInstance()->getConnection();
-        $sql = "SELECT * FROM validators WHERE status = 'active' ORDER BY collateral DESC";
+        $sql = "SELECT * FROM validators ORDER BY created_at DESC";
         
         $stmt = $db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -103,7 +103,7 @@ class Validator
     public static function getApprovedValidators(): array
     {
         $db = Database::getInstance()->getConnection();
-        $sql = "SELECT * FROM validators WHERE is_approved = 1 AND status = 'active' ORDER BY collateral DESC";
+        $sql = "SELECT * FROM validators WHERE is_approved = 1 ORDER BY collateral DESC";
         
         $stmt = $db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -115,10 +115,19 @@ class Validator
     public static function getPendingValidators(): array
     {
         $db = Database::getInstance()->getConnection();
-        $sql = "SELECT * FROM validators WHERE is_approved = 0 AND status = 'active' ORDER BY created_at ASC";
+        $sql = "SELECT * FROM validators WHERE is_approved = 0 ORDER BY created_at ASC";
         
         $stmt = $db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Set IP address
+     */
+    public function setIpAddress(string $ipAddress): self
+    {
+        $this->ipAddress = $ipAddress;
+        return $this;
     }
 
     /**
@@ -144,17 +153,6 @@ class Validator
     }
 
     /**
-     * Set validator status
-     */
-    public function setStatus(string $status): self
-    {
-        if (in_array($status, ['active', 'inactive', 'slashed'])) {
-            $this->status = $status;
-        }
-        return $this;
-    }
-
-    /**
      * Update collateral (called when genesis_allocation blocks are processed)
      */
     public function updateCollateral(float $collateral): self
@@ -170,13 +168,13 @@ class Validator
     {
         $db = Database::getInstance()->getConnection();
         
-        $activeCount = $db->query("SELECT COUNT(*) as count FROM validators WHERE status = 'active'")->fetch()['count'];
+        $totalCount = $db->query("SELECT COUNT(*) as count FROM validators")->fetch()['count'];
         $approvedCount = $db->query("SELECT COUNT(*) as count FROM validators WHERE is_approved = 1")->fetch()['count'];
         $pendingCount = $db->query("SELECT COUNT(*) as count FROM validators WHERE is_approved = 0")->fetch()['count'];
-        $totalCollateral = $db->query("SELECT SUM(collateral) as total FROM validators WHERE status = 'active'")->fetch()['total'] ?? 0;
+        $totalCollateral = $db->query("SELECT SUM(collateral) as total FROM validators")->fetch()['total'] ?? 0;
 
         return [
-            'active' => $activeCount,
+            'total' => $totalCount,
             'approved' => $approvedCount,
             'pending' => $pendingCount,
             'totalCollateral' => (float)$totalCollateral
@@ -189,20 +187,20 @@ class Validator
     public function toArray(): array
     {
         return [
-            'publicKey' => $this->publicKey,
+            'public_key' => $this->publicKey,
             'collateral' => $this->collateral,
-            'status' => $this->status,
-            'isApproved' => $this->isApproved === 1,
-            'createdAt' => $this->createdAt,
-            'updatedAt' => $this->updatedAt
+            'is_approved' => $this->isApproved === 1,
+            'ipaddress' => $this->ipAddress,
+            'created_at' => $this->createdAt,
+            'updated_at' => $this->updatedAt
         ];
     }
 
     // Getters
     public function getPublicKey(): string { return $this->publicKey; }
     public function getCollateral(): float { return $this->collateral; }
-    public function getStatus(): string { return $this->status; }
     public function isApproved(): bool { return $this->isApproved === 1; }
+    public function getIpAddress(): string { return $this->ipAddress; }
     public function getCreatedAt(): int { return $this->createdAt; }
     public function getUpdatedAt(): int { return $this->updatedAt; }
     

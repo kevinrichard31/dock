@@ -3,6 +3,7 @@
 namespace App\Modules\Validator\Api;
 
 use App\Lib\Logger;
+use App\Lib\ValidatorSignatureHelper;
 use App\Modules\Validator\ValidatorManager;
 use App\Modules\Validator\Validator;
 
@@ -180,6 +181,96 @@ class ValidatorAPI
                 'success' => false,
                 'error' => $e->getMessage()
             ];
+        }
+    }
+
+    /**
+     * Submit wallet as validator (capture IP address and verify signature)
+     */
+    public static function submitWalletAsValidator(string $publicKey, string $signature = ''): array
+    {
+        try {
+            if (empty($publicKey)) {
+                return [
+                    'success' => false,
+                    'error' => 'Public key is required'
+                ];
+            }
+
+            if (empty($signature)) {
+                return [
+                    'success' => false,
+                    'error' => 'Signature is required'
+                ];
+            }
+
+            // Get client IP from the HTTP request
+            $ipAddress = self::getClientIP();
+
+            // Prepare registration data for signature verification
+            $registrationData = [
+                'type' => 'validator_registration',
+                'public_key' => $publicKey,
+                'ip' => $ipAddress,
+                'signature' => $signature
+            ];
+
+            // Verify the signature
+            if (!ValidatorSignatureHelper::verifyRegistration($registrationData)) {
+                return [
+                    'success' => false,
+                    'error' => 'Invalid signature'
+                ];
+            }
+
+            // Check if validator already exists
+            if (ValidatorManager::validatorExists($publicKey)) {
+                return [
+                    'success' => false,
+                    'error' => 'Wallet already registered as validator'
+                ];
+            }
+
+            // Register validator with IP
+            $validator = ValidatorManager::registerValidator($publicKey);
+            
+            if ($validator) {
+                // Store IP address in validator data
+                $validator->setIpAddress($ipAddress);
+                
+                return [
+                    'success' => true,
+                    'message' => 'Wallet submitted as validator',
+                    'data' => $validator->toArray(),
+                    'ipaddress' => $ipAddress,
+                    'collateral_required' => Validator::getCollateralAmount()
+                ];
+            }
+            
+            return [
+                'success' => false,
+                'error' => 'Failed to submit wallet as validator'
+            ];
+        } catch (\Exception $e) {
+            Logger::error('Failed to submit wallet as validator', ['error' => $e->getMessage()]);
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Get client IP address
+     */
+    private static function getClientIP(): string
+    {
+        if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+            return $_SERVER['HTTP_CLIENT_IP'];
+        } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            return explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0];
+        } else {
+            return $_SERVER['REMOTE_ADDR'] ?? '';
         }
     }
 }
