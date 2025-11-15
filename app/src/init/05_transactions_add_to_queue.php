@@ -16,6 +16,8 @@ namespace App\Init;
 use App\Config\Database;
 use App\Modules\Transaction\TransactionManager;
 use App\Modules\Queue\QueueManager;
+use App\Modules\Crypto\Crypto;
+use App\Modules\Crypto\SignatureManager;
 use App\Lib\Logger;
 use PDO;
 
@@ -57,6 +59,8 @@ class InitTransactionsAddToQueue
                             $fromAddress = $item['from'];
                             $toAddress = $item['to'];
                             $amount = (float)$item['amount'];
+                            $publicKey = $item['public_key'] ?? null;
+                            $signature = $item['signature'] ?? null;
                             
                             // Générer le hash de la transaction si non présent
                             $hash = $item['hash'] ?? self::hashTransaction(
@@ -97,7 +101,7 @@ class InitTransactionsAddToQueue
                                     'block_index' => $blockIndex
                                 ]);
 
-                                // Ajouter à la queue
+                                // Ajouter à la queue avec signature
                                 $queueItem = QueueManager::addToQueue(
                                     $transactionId,
                                     $fromAddress,
@@ -105,14 +109,17 @@ class InitTransactionsAddToQueue
                                     $amount,
                                     $hash,
                                     $timestamp,
-                                    $blockIndex
+                                    $blockIndex,
+                                    $signature,
+                                    $publicKey
                                 );
 
                                 if ($queueItem) {
                                     $queuedCount++;
                                     Logger::info('Transaction added to queue', [
                                         'transaction_id' => $transactionId,
-                                        'hash' => substr($hash, 0, 20) . '...'
+                                        'hash' => substr($hash, 0, 20) . '...',
+                                        'signed' => !empty($signature)
                                     ]);
                                 }
                             }
@@ -124,6 +131,8 @@ class InitTransactionsAddToQueue
                                 $fromAddress = $item['public_key'] ?? 'genesis';
                                 $toAddress = $allocation['recipient'];
                                 $amount = (float)$allocation['amount'];
+                                $publicKey = $item['public_key'] ?? null;
+                                $signature = $item['signature'] ?? null;
                                 
                                 $hash = self::hashTransaction(
                                     $fromAddress,
@@ -161,7 +170,7 @@ class InitTransactionsAddToQueue
                                         'block_index' => $blockIndex
                                     ]);
 
-                                    // Ajouter à la queue
+                                    // Ajouter à la queue avec signature
                                     $queueItem = QueueManager::addToQueue(
                                         $transactionId,
                                         $fromAddress,
@@ -169,14 +178,17 @@ class InitTransactionsAddToQueue
                                         $amount,
                                         $hash,
                                         $timestamp,
-                                        $blockIndex
+                                        $blockIndex,
+                                        $signature,
+                                        $publicKey
                                     );
 
                                     if ($queueItem) {
                                         $queuedCount++;
                                         Logger::info('Genesis transaction added to queue', [
                                             'transaction_id' => $transactionId,
-                                            'hash' => substr($hash, 0, 20) . '...'
+                                            'hash' => substr($hash, 0, 20) . '...',
+                                            'signed' => !empty($signature)
                                         ]);
                                     }
                                 }
@@ -188,6 +200,8 @@ class InitTransactionsAddToQueue
                             $fromAddress = $item['public_key']; // Le validateur qui s'enregistre
                             $toAddress = $item['public_key']; // Transaction vers lui-même
                             $amount = $item['collateral'] ?? 10000;
+                            $publicKey = $item['public_key'];
+                            $signature = $item['signature'] ?? null;
                             
                             $hash = self::hashTransaction(
                                 $fromAddress,
@@ -224,7 +238,7 @@ class InitTransactionsAddToQueue
                                     'block_index' => $blockIndex
                                 ]);
 
-                                // Ajouter à la queue
+                                // Ajouter à la queue avec signature
                                 $queueItem = QueueManager::addToQueue(
                                     $transactionId,
                                     $fromAddress,
@@ -232,14 +246,17 @@ class InitTransactionsAddToQueue
                                     $amount,
                                     $hash,
                                     $timestamp,
-                                    $blockIndex
+                                    $blockIndex,
+                                    $signature,
+                                    $publicKey
                                 );
 
                                 if ($queueItem) {
                                     $queuedCount++;
                                     Logger::info('Validator registration added to queue', [
                                         'transaction_id' => $transactionId,
-                                        'hash' => substr($hash, 0, 20) . '...'
+                                        'hash' => substr($hash, 0, 20) . '...',
+                                        'signed' => !empty($signature)
                                     ]);
                                 }
                             }

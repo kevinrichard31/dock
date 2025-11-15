@@ -3,11 +3,15 @@
 /**
  * QueueManager.php
  * Gestionnaire de la queue de transactions
+ * Vérifie les signatures et gère le traitement des transactions
  */
 
 namespace App\Modules\Queue;
 
 use App\Config\Database;
+use App\Modules\Crypto\Crypto;
+use App\Modules\Crypto\SignatureManager;
+use App\Lib\Logger;
 use PDO;
 
 class QueueManager
@@ -19,12 +23,26 @@ class QueueManager
         float $amount,
         string $hash,
         int $timestamp,
-        ?int $blockIndex = null
+        ?int $blockIndex = null,
+        ?string $signature = null,
+        ?string $publicKey = null
     ): ?Queue {
         try {
             // Vérifier si la transaction est déjà dans la queue
             if (self::existsInQueue($hash)) {
                 return null;
+            }
+
+            // Vérifier la signature si fournie
+            if ($signature && $publicKey) {
+                if (!self::verifyTransactionSignature($fromAddress, $toAddress, $amount, $timestamp, $signature, $publicKey)) {
+                    Logger::warning('Invalid transaction signature', [
+                        'from' => $fromAddress,
+                        'to' => $toAddress,
+                        'hash' => $hash
+                    ]);
+                    return null;
+                }
             }
 
             $queueItem = new Queue(
@@ -42,6 +60,7 @@ class QueueManager
                 return $queueItem;
             }
         } catch (\Exception $e) {
+            Logger::error('Error adding to queue', ['error' => $e->getMessage()]);
             return null;
         }
 
@@ -57,6 +76,34 @@ class QueueManager
             $stmt->execute([':hash' => $hash]);
             return (int)$stmt->fetchColumn() > 0;
         } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Verify transaction signature
+     */
+    private static function verifyTransactionSignature(
+        string $fromAddress,
+        string $toAddress,
+        float $amount,
+        int $timestamp,
+        string $signature,
+        string $publicKey
+    ): bool {
+        try {
+            $transactionData = [
+                'from' => $fromAddress,
+                'to' => $toAddress,
+                'amount' => $amount,
+                'timestamp' => $timestamp,
+                'public_key' => $publicKey,
+                'signature' => $signature
+            ];
+
+            return SignatureManager::verifyTransaction($transactionData);
+        } catch (\Exception $e) {
+            Logger::debug('Transaction signature verification failed', ['error' => $e->getMessage()]);
             return false;
         }
     }

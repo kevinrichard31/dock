@@ -18,6 +18,7 @@ use App\Modules\Block\Block;
 use App\Modules\Block\BlockChain;
 use App\Lib\Logger;
 use App\Modules\Crypto\Crypto;
+use App\Modules\Crypto\SignatureManager;
 use PDO;
 
 class InitSimulation
@@ -48,6 +49,7 @@ class InitSimulation
             }
 
             $genesisPublicKey = $systemKeys['public'];
+            $genesisPrivateKey = $systemKeys['private'];
             Logger::info('System (genesis) public key loaded', ['key' => substr($genesisPublicKey, 0, 20) . '...']);
 
             // Générer une nouvelle paire de clés pour le compte de simulation
@@ -81,6 +83,7 @@ class InitSimulation
                 'from' => $genesisPublicKey,
                 'to' => $simulationPublicKey,
                 'amount' => 100000,
+                'public_key' => $genesisPublicKey,
                 'description' => 'First simulation transaction - Genesis sends to simulation account',
                 'timestamp' => time()
             ];
@@ -93,12 +96,25 @@ class InitSimulation
                 $transaction1['timestamp']
             );
 
+            // Signer la transaction 1
+            $signResult1 = Crypto::sign(
+                json_encode([
+                    'from' => $transaction1['from'],
+                    'to' => $transaction1['to'],
+                    'amount' => $transaction1['amount'],
+                    'timestamp' => $transaction1['timestamp']
+                ]),
+                $genesisPrivateKey
+            );
+            $transaction1['signature'] = $signResult1;
+
             // Transaction 2: Genesis envoie 100000 tokens supplémentaires à la simulation
             $transaction2 = [
                 'type' => 'transaction',
                 'from' => $genesisPublicKey,
                 'to' => $simulationPublicKey,
                 'amount' => 100000,
+                'public_key' => $genesisPublicKey,
                 'description' => 'Second simulation transaction - Genesis sends more to simulation account',
                 'timestamp' => time() + 1
             ];
@@ -111,18 +127,32 @@ class InitSimulation
                 $transaction2['timestamp']
             );
 
+            // Signer la transaction 2
+            $signResult2 = Crypto::sign(
+                json_encode([
+                    'from' => $transaction2['from'],
+                    'to' => $transaction2['to'],
+                    'amount' => $transaction2['amount'],
+                    'timestamp' => $transaction2['timestamp']
+                ]),
+                $genesisPrivateKey
+            );
+            $transaction2['signature'] = $signResult2;
+
             Logger::info('Simulation transactions created', [
                 'transaction_1' => [
                     'from' => substr($transaction1['from'], 0, 20) . '...',
                     'to' => substr($transaction1['to'], 0, 20) . '...',
                     'amount' => $transaction1['amount'],
-                    'hash' => substr($transaction1['hash'], 0, 20) . '...'
+                    'hash' => substr($transaction1['hash'], 0, 20) . '...',
+                    'signed' => !empty($transaction1['signature'])
                 ],
                 'transaction_2' => [
                     'from' => substr($transaction2['from'], 0, 20) . '...',
                     'to' => substr($transaction2['to'], 0, 20) . '...',
                     'amount' => $transaction2['amount'],
-                    'hash' => substr($transaction2['hash'], 0, 20) . '...'
+                    'hash' => substr($transaction2['hash'], 0, 20) . '...',
+                    'signed' => !empty($transaction2['signature'])
                 ]
             ]);
 
