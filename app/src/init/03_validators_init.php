@@ -102,17 +102,22 @@ class InitValidators
             ]);
 
             // Enregistrer le validateur dans la base de données
-            $validator = ValidatorManager::registerValidator($publicKey);
-            if ($validator) {
-                // Auto-approuver le validateur créateur
-                $validator->approve();
-                Logger::success('Creator registered as approved validator', [
-                    'publicKey' => substr($publicKey, 0, 20) . '...',
-                    'collateral' => 10000
-                ]);
-            } else {
-                throw new \Exception('Failed to register validator');
-            }
+            $validatorSql = "INSERT INTO validators (public_key, ip, collateral, status, is_approved) 
+                             VALUES (:public_key, :ip, :collateral, 'active', :is_approved)
+                             ON DUPLICATE KEY UPDATE ip = VALUES(ip), collateral = VALUES(collateral), is_approved = VALUES(is_approved)";
+            $validatorStmt = $db->prepare($validatorSql);
+            $validatorStmt->execute([
+                ':public_key' => $publicKey,
+                ':ip' => $validatorIp,
+                ':collateral' => 10000,
+                ':is_approved' => 1
+            ]);
+            
+            Logger::success('Creator registered as approved validator', [
+                'publicKey' => substr($publicKey, 0, 20) . '...',
+                'ip' => $validatorIp,
+                'collateral' => 10000
+            ]);
 
         } catch (\Exception $e) {
             Logger::error('Failed to initialize validators', [

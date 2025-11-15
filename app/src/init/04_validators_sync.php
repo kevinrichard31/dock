@@ -67,12 +67,14 @@ class InitValidatorsSync
                         // Traiter les enregistrements de validateurs
                         if ($transaction['type'] === 'validator_registration' && isset($transaction['public_key'])) {
                             $publicKey = $transaction['public_key'];
+                            $ip = $transaction['ip'] ?? '127.0.0.1';
                             $collateral = $transaction['collateral'] ?? 10000;
                             $isApproved = $transaction['is_approved'] ?? 0;
 
                             if (!isset($validatorsData[$publicKey])) {
                                 $validatorsData[$publicKey] = [
                                     'public_key' => $publicKey,
+                                    'ip' => $ip,
                                     'collateral' => $collateral,
                                     'is_approved' => $isApproved
                                 ];
@@ -80,6 +82,7 @@ class InitValidatorsSync
 
                                 Logger::info('Validator registration found', [
                                     'public_key' => substr($publicKey, 0, 20) . '...',
+                                    'ip' => $ip,
                                     'collateral' => $collateral
                                 ]);
                             }
@@ -117,6 +120,7 @@ class InitValidatorsSync
 
             foreach ($validatorsData as $validatorData) {
                 $publicKey = $validatorData['public_key'];
+                $ip = $validatorData['ip'] ?? '127.0.0.1';
                 $collateral = $validatorData['collateral'];
                 $isApproved = $validatorData['is_approved'];
 
@@ -128,31 +132,35 @@ class InitValidatorsSync
 
                 if ($existingValidator) {
                     // Mettre à jour le validateur
-                    $updateSql = "UPDATE validators SET collateral = :collateral, is_approved = :is_approved WHERE public_key = :public_key";
+                    $updateSql = "UPDATE validators SET ip = :ip, collateral = :collateral, is_approved = :is_approved WHERE public_key = :public_key";
                     $updateStmt = $db->prepare($updateSql);
                     $updateStmt->execute([
+                        ':ip' => $ip,
                         ':collateral' => $collateral,
                         ':is_approved' => $isApproved,
                         ':public_key' => $publicKey
                     ]);
                     Logger::info('Validator updated', [
                         'public_key' => substr($publicKey, 0, 20) . '...',
+                        'ip' => $ip,
                         'collateral' => $collateral,
                         'approved' => $isApproved === 1
                     ]);
                 } else {
                     // Créer un nouveau validateur
-                    $insertSql = "INSERT INTO validators (public_key, collateral, status, is_approved) 
-                                  VALUES (:public_key, :collateral, 'active', :is_approved)";
+                    $insertSql = "INSERT INTO validators (public_key, ip, collateral, status, is_approved) 
+                                  VALUES (:public_key, :ip, :collateral, 'active', :is_approved)";
                     $insertStmt = $db->prepare($insertSql);
                     $insertStmt->execute([
                         ':public_key' => $publicKey,
+                        ':ip' => $ip,
                         ':collateral' => $collateral,
                         ':is_approved' => $isApproved
                     ]);
 
                     Logger::info('Validator created', [
                         'public_key' => substr($publicKey, 0, 20) . '...',
+                        'ip' => $ip,
                         'collateral' => $collateral,
                         'approved' => $isApproved === 1
                     ]);
