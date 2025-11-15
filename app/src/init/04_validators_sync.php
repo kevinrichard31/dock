@@ -69,7 +69,8 @@ class InitValidatorsSync
                             $publicKey = $transaction['public_key'];
                             $ipAddress = $transaction['ip_address'] ?? '127.0.0.1';
                             $collateral = $transaction['collateral'] ?? 10000;
-                            $isApproved = $transaction['is_approved'] ?? 0;
+                            // Si le validateur est dans un bloc, il est automatiquement approuvé
+                            $isApproved = 1;
 
                             if (!isset($validatorsData[$publicKey])) {
                                 $validatorsData[$publicKey] = [
@@ -83,7 +84,8 @@ class InitValidatorsSync
                                 Logger::info('Validator registration found', [
                                     'public_key' => substr($publicKey, 0, 20) . '...',
                                     'ip_address' => $ipAddress,
-                                    'collateral' => $collateral
+                                    'collateral' => $collateral,
+                                    'approved' => true
                                 ]);
                             }
                         }

@@ -63,6 +63,7 @@ try {
         ['class' => InitValidatorsSimulation::class, 'name' => 'Validators Simulation'],
         ['class' => InitTransactionsAddToQueue::class, 'name' => 'Transactions Add to Queue'],
         ['class' => InitQueueProcess::class, 'name' => 'Queue Process'],
+        ['class' => InitValidatorsSync::class, 'name' => 'Validators Sync'],
     ];
 
     foreach ($steps as $step) {
