@@ -61,14 +61,29 @@ class InitValidators
             $lastBlockHash = $lastBlockRecord['hash'];
             $nextBlockIndex = $lastBlockRecord['index_num'] + 1;
 
+            // Get validator IP address
+            $validatorIp = self::myPublicIp();
+
             // Créer le bloc de validation - enregistrement du validateur
             $validatorRegistrationData = [
                 'type' => 'validator_registration',
                 'description' => 'Creator registered as validator',
                 'public_key' => $publicKey,
+                'ip' => $validatorIp,
                 'collateral' => 10000,
                 'is_approved' => 1
             ];
+
+            // Create signature for the registration data (excluding signature itself)
+            $dataToSign = json_encode([
+                'type' => $validatorRegistrationData['type'],
+                'public_key' => $validatorRegistrationData['public_key'],
+                'ip' => $validatorRegistrationData['ip'],
+                'collateral' => $validatorRegistrationData['collateral']
+            ]);
+            
+            $signature = Crypto::sign($dataToSign, $keys['private']);
+            $validatorRegistrationData['signature'] = $signature;
 
             $validatorBlock = new Block(
                 $nextBlockIndex,
@@ -105,5 +120,25 @@ class InitValidators
             ]);
             throw $e;
         }
+    }
+
+    /**
+     * Get validator IP address
+     * Returns the public IPv4 address visible on the network
+     */
+    private static function myPublicIp(): string
+    {
+        // Try to get public IP from ipify API
+        try {
+            $ip = @file_get_contents('https://api.ipify.org/');
+            if ($ip && filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                return trim($ip);
+            }
+        } catch (\Exception $e) {
+            // API call failed, continue to fallback
+        }
+
+        // Fallback to localhost
+        return '127.0.0.1';
     }
 }

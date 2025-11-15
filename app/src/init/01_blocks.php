@@ -17,6 +17,7 @@ use App\Modules\Block\BlockChain;
 use App\Modules\Wallet\Wallet;
 use App\Lib\Logger;
 use App\Lib\Crypto;
+use App\Lib\ValidatorSignatureHelper;
 use PDO;
 
 class InitBlocks
@@ -68,6 +69,16 @@ class InitBlocks
                     ]
                 ]
             ];
+
+            // Sign the allocation data
+            $dataToSign = json_encode([
+                'type' => $allocationData['type'],
+                'public_key' => $allocationData['public_key'],
+                'total_supply' => $allocationData['total_supply']
+            ]);
+            
+            $signature = Crypto::sign($dataToSign, $keys['private']);
+            $allocationData['signature'] = $signature;
             
             // Créer le bloc de départ avec les données d'allocation (Proof of Stake)
             $genesisBlock = new Block(0, '0', [$allocationData]);

@@ -137,4 +137,69 @@ class Crypto
 
         return $hashes[0];
     }
+
+    /**
+     * Sign a message with a private key using secp256k1
+     * Returns signature as hex string (r and s concatenated)
+     */
+    public static function sign(string $message, string $privateKey): string
+    {
+        try {
+            $ec = new EC('secp256k1');
+            $key = $ec->keyFromPrivate($privateKey, 'hex');
+            
+            // Hash the message
+            $hash = self::hash($message);
+            
+            // Sign the hash
+            $signature = $key->sign($hash);
+            
+            // Get r and s components from signature object
+            // The signature object has r and s properties (BN instances)
+            $r = $signature->r->toString(16);
+            $s = $signature->s->toString(16);
+            
+            // Pad to 64 chars each (256 bits)
+            $r = str_pad($r, 64, '0', STR_PAD_LEFT);
+            $s = str_pad($s, 64, '0', STR_PAD_LEFT);
+            
+            return $r . $s;
+        } catch (\Exception $e) {
+            throw new \Exception('Signature creation failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Verify a signature with a public key
+     * Signature should be concatenated r+s (128 hex chars)
+     */
+    public static function verifySignature(string $message, string $signature, string $publicKey): bool
+    {
+        try {
+            $ec = new EC('secp256k1');
+            $key = $ec->keyFromPublic($publicKey, 'hex');
+            
+            // Hash the message
+            $hash = self::hash($message);
+            
+            // Split signature into r and s
+            if (strlen($signature) !== 128) {
+                return false;
+            }
+            
+            $r = substr($signature, 0, 64);
+            $s = substr($signature, 64, 64);
+            
+            // Create signature object
+            $signatureObj = $ec->signature([
+                'r' => $r,
+                's' => $s
+            ]);
+            
+            // Verify the signature (Elliptic expects hex string)
+            return $key->verify($hash, $signatureObj);
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
 }
