@@ -7,7 +7,7 @@ use App\Modules\Block\BlockAPI;
 use App\Modules\Wallet\WalletRouter;
 use App\Modules\Wallet\WalletAPI;
 use App\Modules\Validator\ValidatorRouter;
-use App\Modules\Validator\ValidatorAPI;
+use App\Modules\Validator\Api\ValidatorAPI;
 use App\Modules\Init\Api\InitRouter;
 
 class Router

@@ -1,8 +1,10 @@
 <?php
 
-namespace App\Modules\Validator;
+namespace App\Modules\Validator\Api;
 
 use App\Lib\Logger;
+use App\Modules\Validator\ValidatorManager;
+use App\Modules\Validator\Validator;
 
 /**
  * ValidatorAPI
@@ -152,18 +154,10 @@ class ValidatorAPI
     public static function getStats(): array
     {
         try {
-            $stats = ValidatorManager::getStats();
-            
-            return [
-                'success' => true,
-                'data' => $stats
-            ];
+            return ValidatorManager::getStats();
         } catch (\Exception $e) {
             Logger::error('Failed to get validator stats', ['error' => $e->getMessage()]);
-            return [
-                'success' => false,
-                'error' => $e->getMessage()
-            ];
+            return [];
         }
     }
 
