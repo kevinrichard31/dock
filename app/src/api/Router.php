@@ -9,6 +9,7 @@ use App\Modules\Wallet\WalletAPI;
 use App\Modules\Validator\ValidatorRouter;
 use App\Modules\Validator\Api\ValidatorAPI;
 use App\Modules\Init\Api\InitRouter;
+use App\Modules\Crypto\API\CryptoRouter;
 
 class Router
 {
@@ -31,6 +32,9 @@ class Router
             // Route to appropriate module router
             if (InitRouter::matches($this->path)) {
                 return InitRouter::route($this->path);
+            } elseif (CryptoRouter::matches($this->path)) {
+                $router = new CryptoRouter($this->method, $this->path);
+                return $router->route();
             } elseif (BlockRouter::matches($this->path)) {
                 $router = new BlockRouter($this->method, $this->path);
                 return $router->route();
@@ -59,6 +63,10 @@ class Router
                         'GET /api/validator/get_approved',
                         'GET /api/validator/get_pending',
                         'GET /api/validator/stats',
+                        'POST /api/crypto/keygen - Generate key pair',
+                        'POST /api/crypto/hash - Hash data',
+                        'POST /api/crypto/sign - Sign message',
+                        'POST /api/crypto/verify - Verify signature',
                         'POST /api/init - Run full initialization',
                         'POST /api/init/blocks - Initialize blockchain',
                         'POST /api/init/wallets - Initialize wallets'

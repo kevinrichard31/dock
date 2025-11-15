@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Lib;
+namespace App\Modules\Crypto;
 
 use Elliptic\EC;
 use App\Lib\Logger;

@@ -17,7 +17,7 @@ use App\Config\Database;
 use App\Modules\Block\Block;
 use App\Modules\Validator\ValidatorManager;
 use App\Lib\Logger;
-use App\Lib\Crypto;
+use App\Modules\Crypto\Crypto;
 use PDO;
 
 class InitValidators

@@ -3,7 +3,7 @@
 namespace App\Modules\Wallet;
 
 use App\Config\Database;
-use App\Lib\Crypto;
+use App\Modules\Crypto\Crypto;
 use PDO;
 
 class Wallet

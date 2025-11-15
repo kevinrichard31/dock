@@ -8,7 +8,7 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 use Elliptic\EC;
 use App\Lib\Logger;
-use App\Lib\Crypto;
+use App\Modules\Crypto\Crypto;
 
 Logger::info('=== Testing Signature Verification ===');
 

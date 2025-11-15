@@ -34,6 +34,11 @@ class Logger
         self::log('WARNING', $message, $context);
     }
 
+    public static function debug(string $message, array $context = []): void
+    {
+        self::log('DEBUG', $message, $context);
+    }
+
     private static function log(string $level, string $message, array $context): void
     {
         $timestamp = date('Y-m-d H:i:s');

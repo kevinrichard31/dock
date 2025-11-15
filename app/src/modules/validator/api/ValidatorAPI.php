@@ -3,7 +3,7 @@
 namespace App\Modules\Validator\Api;
 
 use App\Lib\Logger;
-use App\Lib\ValidatorSignatureHelper;
+use App\Modules\Crypto\SignatureManager;
 use App\Modules\Validator\ValidatorManager;
 use App\Modules\Validator\Validator;
 

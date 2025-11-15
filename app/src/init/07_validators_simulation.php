@@ -18,8 +18,8 @@ use App\Modules\Block\Block;
 use App\Modules\Block\BlockChain;
 use App\Modules\Validator\ValidatorManager;
 use App\Lib\Logger;
-use App\Lib\Crypto;
-use App\Lib\ValidatorSignatureHelper;
+use App\Modules\Crypto\Crypto;
+use App\Modules\Crypto\SignatureManager;
 use PDO;
 
 class InitValidatorsSimulation

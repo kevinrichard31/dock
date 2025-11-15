@@ -3,8 +3,8 @@
 namespace App\Modules\Validator;
 
 use App\Config\Database;
-use App\Lib\Crypto;
-use App\Lib\ValidatorSignatureHelper;
+use App\Modules\Crypto\Crypto;
+use App\Modules\Crypto\SignatureManager;
 use App\Lib\Logger;
 use App\Modules\Block\BlockChain;
 use PDO;
