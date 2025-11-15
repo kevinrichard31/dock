@@ -6,30 +6,30 @@ class HomeController
 {
     public static function getHome(): array
     {
-        return [
+            return [
             'title' => 'Blockchain Dashboard',
             'modules' => [
                 [
                     'name' => 'Blockchain',
-                    'icon' => '⛓️',
+                    'icon' => '',
                     'description' => 'Visualiser la blockchain et les blocs minés',
                     'link' => '/blocks'
                 ],
                 [
                     'name' => 'Wallets',
-                    'icon' => '💰',
+                    'icon' => '',
                     'description' => 'Gérer les portefeuilles et les adresses',
                     'link' => '/wallets'
                 ],
                 [
                     'name' => 'Transactions',
-                    'icon' => '📝',
+                    'icon' => '',
                     'description' => 'Historique des transactions',
                     'link' => '/transactions'
                 ],
                 [
                     'name' => 'Stats',
-                    'icon' => '📊',
+                    'icon' => '',
                     'description' => 'Statistiques système',
                     'link' => '/api/stats'
                 ]

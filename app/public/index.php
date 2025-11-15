@@ -18,11 +18,11 @@ $path = trim($path, '/');
 
 // Route to appropriate view router
 if (empty($path) || $path === '') {
-    HomeViewRouter::route('/');
+    echo HomeViewRouter::route('/');
 } elseif ($path === 'blocks' || $path === 'blocks/') {
-    BlockViewRouter::route('/blocks');
+    echo BlockViewRouter::route('/blocks');
 } elseif ($path === 'wallets' || $path === 'wallets/') {
-    WalletViewRouter::route('/wallets');
+    echo WalletViewRouter::route('/wallets');
 } else {
     // 404 Not Found
     http_response_code(404);

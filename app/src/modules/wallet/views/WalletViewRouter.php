@@ -29,7 +29,6 @@ class WalletViewRouter
         ob_start();
         include __DIR__ . '/' . $view . '.php';
         $content = ob_get_clean();
-        echo $content;
         return $content;
     }
 }

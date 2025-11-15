@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $data['title']; ?></title>
     <style>
+        :root {
+            --color-white: #ffffff;
+            --color-black: #000000;
+            --color-gray-light: #f0f0f0;
+            --color-gray-medium: #999999;
+            --color-gray-dark: #333333;
+            --color-border: #e0e0e0;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -13,12 +22,13 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--color-white);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            border-top: 3px solid var(--color-black);
         }
 
         .container {
@@ -28,19 +38,18 @@
 
         .header {
             text-align: center;
-            color: white;
+            color: var(--color-black);
             margin-bottom: 50px;
         }
 
         .header h1 {
             font-size: 3em;
             margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
         .header p {
             font-size: 1.2em;
-            opacity: 0.9;
+            color: var(--color-gray-medium);
         }
 
         .modules-grid {
@@ -51,21 +60,21 @@
         }
 
         .module-card {
-            background: white;
-            border-radius: 15px;
+            background: var(--color-white);
             padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border: 1px solid var(--color-border);
             transition: all 0.3s ease;
             cursor: pointer;
             text-decoration: none;
             color: inherit;
             display: flex;
             flex-direction: column;
+            border-left: 3px solid var(--color-black);
         }
 
         .module-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border-left: 3px solid var(--color-black);
+            background: var(--color-gray-light);
         }
 
         .module-icon {
@@ -77,12 +86,12 @@
         .module-name {
             font-size: 1.5em;
             font-weight: bold;
-            color: #333;
+            color: var(--color-black);
             margin-bottom: 10px;
         }
 
         .module-description {
-            color: #666;
+            color: var(--color-gray-medium);
             font-size: 0.95em;
             line-height: 1.5;
             flex-grow: 1;
@@ -91,26 +100,26 @@
         .module-link {
             display: inline-block;
             margin-top: 15px;
-            color: #667eea;
+            color: var(--color-black);
             font-weight: bold;
             text-decoration: none;
             transition: color 0.3s ease;
         }
 
         .module-link:hover {
-            color: #764ba2;
+            color: var(--color-gray-medium);
         }
 
         .footer {
             text-align: center;
-            color: white;
+            color: var(--color-gray-dark);
             margin-top: 40px;
             padding-top: 30px;
-            border-top: 1px solid rgba(255,255,255,0.2);
+            border-top: 1px solid var(--color-border);
         }
 
         .footer p {
-            opacity: 0.8;
+            color: var(--color-gray-medium);
         }
 
         @media (max-width: 768px) {
@@ -128,7 +137,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>⛓️ Blockchain Dashboard</h1>
+            <h1>Blockchain Dashboard</h1>
             <p>Système blockchain décentralisé avec wallets et transactions</p>
         </div>
 
@@ -144,7 +153,7 @@
         </div>
 
         <div class="footer">
-            <p>🚀 Système Blockchain v1.0 - Tous droits réservés</p>
+            <p>Système Blockchain v1.0 - Tous droits réservés</p>
         </div>
     </div>
 </body>
