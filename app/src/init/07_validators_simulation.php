@@ -15,6 +15,7 @@ namespace App\Init;
 
 use App\Config\Database;
 use App\Modules\Block\Block;
+use App\Modules\Block\BlockChain;
 use App\Modules\Validator\ValidatorManager;
 use App\Lib\Logger;
 use App\Lib\Crypto;
@@ -68,13 +69,17 @@ class InitValidatorsSimulation
             // Obtenir l'IP du validateur simulation
             $simulationIp = self::myPublicIp();
 
+            // Récupérer le collateral depuis la blockchain
+            $blockchain = new BlockChain();
+            $collateral = $blockchain->getCollateral();
+
             // Créer les données d'enregistrement du validateur
             $validatorRegistrationData = [
                 'type' => 'validator_registration',
                 'description' => 'Simulation account registered as validator',
                 'public_key' => $simulationPublicKey,
                 'ip_address' => $simulationIp,
-                'collateral' => 10000,
+                'collateral' => $collateral,
                 'is_approved' => 0  // En attente d'approbation
             ];
 
@@ -131,23 +136,23 @@ class InitValidatorsSimulation
                 'public_key' => substr($simulationPublicKey, 0, 20) . '...'
             ]);
 
-            // Enregistrer le validateur dans la base de données
-            $validatorSql = "INSERT INTO validators (public_key, ip_address, collateral, is_approved) 
-                             VALUES (:public_key, :ip_address, :collateral, :is_approved)
-                             ON DUPLICATE KEY UPDATE ip_address = VALUES(ip_address), collateral = VALUES(collateral), is_approved = VALUES(is_approved)";
-            $validatorStmt = $db->prepare($validatorSql);
-            $validatorStmt->execute([
-                ':public_key' => $simulationPublicKey,
-                ':ip_address' => $simulationIp,
-                ':collateral' => 10000,
-                ':is_approved' => 0
-            ]);
+            // Enregistrer le validateur dans la base de données via le manager
+            $registrationResult = ValidatorManager::registerValidatorWithSignature(
+                $simulationPublicKey,
+                $signature,
+                $simulationIp,
+                true    // Approuvé car enregistré dans un bloc
+            );
 
-            Logger::success('Simulation validator registered (pending approval)', [
+            if (!$registrationResult['success']) {
+                throw new \Exception('Failed to register simulation validator: ' . $registrationResult['error']);
+            }
+
+            Logger::success('Simulation validator registered successfully', [
                 'public_key' => substr($simulationPublicKey, 0, 20) . '...',
                 'ip_address' => $simulationIp,
-                'collateral' => 10000,
-                'status' => 'pending'
+                'collateral' => $collateral,
+                'status' => 'approved'
             ]);
 
         } catch (\Exception $e) {

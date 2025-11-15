@@ -131,4 +131,34 @@ class BlockChain
             'isValid' => $this->isValid()
         ];
     }
+
+    /**
+     * Get collateral amount for validators from genesis block
+     * Looks for the default collateral in genesis allocation blocks
+     * Returns the most recent collateral found
+     */
+    public function getCollateral(): float
+    {
+        $collateral = null;
+
+        // Search through all blocks for collateral information (get the most recent)
+        foreach ($this->chain as $block) {
+            $transactions = $block->getTransactions();
+            
+            foreach ($transactions as $transaction) {
+                // Check genesis allocation blocks
+                if ($transaction['type'] === 'genesis_allocation' && isset($transaction['collateral'])) {
+                    $collateral = (float)$transaction['collateral'];
+                }
+            }
+        }
+
+        if ($collateral !== null) {
+            return $collateral;
+        }
+
+        // throw exception if no collateral found
+        throw new \Exception('No collateral information found in genesis block.');
+    }
 }
+

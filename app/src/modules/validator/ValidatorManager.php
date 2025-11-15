@@ -3,6 +3,10 @@
 namespace App\Modules\Validator;
 
 use App\Config\Database;
+use App\Lib\Crypto;
+use App\Lib\ValidatorSignatureHelper;
+use App\Lib\Logger;
+use App\Modules\Block\BlockChain;
 use PDO;
 
 class ValidatorManager
@@ -24,6 +28,101 @@ class ValidatorManager
         }
 
         return null;
+    }
+
+    /**
+     * Register validator with signature verification and complete data
+     * Used by both API and initialization
+     */
+    public static function registerValidatorWithSignature(
+        string $publicKey,
+        string $signature,
+        string $ipAddress,
+        bool $isApproved = true
+    ): array {
+        try {
+            // Check if validator already exists
+            if (self::validatorExists($publicKey)) {
+                return [
+                    'success' => false,
+                    'error' => 'Validator already registered',
+                    'validator' => self::getValidator($publicKey)->toArray()
+                ];
+            }
+
+            // Get collateral from blockchain if not provided
+            if ($collateral === null) {
+                $blockchain = new BlockChain();
+                $collateral = $blockchain->getCollateral();
+            }
+
+            // Prepare data for signature verification
+            $dataToSign = json_encode([
+                'type' => 'validator_registration',
+                'public_key' => $publicKey,
+                'ip_address' => $ipAddress,
+                'collateral' => $collateral
+            ]);
+
+            // Verify the signature
+            if (!Crypto::verifySignature($dataToSign, $signature, $publicKey)) {
+                return [
+                    'success' => false,
+                    'error' => 'Invalid signature',
+                    'public_key' => $publicKey
+                ];
+            }
+
+            Logger::info('Signature verified for validator registration', [
+                'public_key' => substr($publicKey, 0, 20) . '...'
+            ]);
+
+            // Register the validator
+            $db = Database::getInstance()->getConnection();
+            $sql = "INSERT INTO validators (public_key, ip_address, collateral, is_approved) 
+                    VALUES (:public_key, :ip_address, :collateral, :is_approved)";
+            
+            $stmt = $db->prepare($sql);
+            $result = $stmt->execute([
+                ':public_key' => $publicKey,
+                ':ip_address' => $ipAddress,
+                ':collateral' => $collateral,
+                ':is_approved' => $isApproved ? 1 : 0
+            ]);
+
+            if (!$result) {
+                return [
+                    'success' => false,
+                    'error' => 'Failed to register validator in database'
+                ];
+            }
+
+            Logger::success('Validator registered successfully', [
+                'public_key' => substr($publicKey, 0, 20) . '...',
+                'ip_address' => $ipAddress,
+                'collateral' => $collateral,
+                'approved' => $isApproved
+            ]);
+
+            return [
+                'success' => true,
+                'message' => 'Validator registered successfully',
+                'validator' => [
+                    'public_key' => $publicKey,
+                    'ip_address' => $ipAddress,
+                    'collateral' => $collateral,
+                    'is_approved' => $isApproved
+                ]
+            ];
+        } catch (\Exception $e) {
+            Logger::error('Failed to register validator with signature', [
+                'error' => $e->getMessage()
+            ]);
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
     }
 
     /**

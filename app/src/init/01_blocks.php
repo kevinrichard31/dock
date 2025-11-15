@@ -60,6 +60,7 @@ class InitBlocks
                 'type' => 'genesis_allocation',
                 'description' => 'Initial coin allocation',
                 'total_supply' => 1000000,
+                'collateral' => 10000,
                 'public_key' => $keys['public'],
                 'allocations' => [
                     [

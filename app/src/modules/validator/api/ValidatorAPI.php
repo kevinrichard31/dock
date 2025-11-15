@@ -206,49 +206,25 @@ class ValidatorAPI
             // Get client IP from the HTTP request
             $ipAddress = self::getClientIP();
 
-            // Prepare registration data for signature verification
-            $registrationData = [
-                'type' => 'validator_registration',
-                'public_key' => $publicKey,
-                'ip' => $ipAddress,
-                'signature' => $signature
-            ];
+            // Register validator using manager with signature verification
+            $result = ValidatorManager::registerValidatorWithSignature(
+                $publicKey,
+                $signature,
+                $ipAddress,
+                null,   // Will get collateral from blockchain
+                false   // Not approved by default (pending)
+            );
 
-            // Verify the signature
-            if (!ValidatorSignatureHelper::verifyRegistration($registrationData)) {
-                return [
-                    'success' => false,
-                    'error' => 'Invalid signature'
-                ];
+            if (!$result['success']) {
+                return $result;
             }
 
-            // Check if validator already exists
-            if (ValidatorManager::validatorExists($publicKey)) {
-                return [
-                    'success' => false,
-                    'error' => 'Wallet already registered as validator'
-                ];
-            }
-
-            // Register validator with IP
-            $validator = ValidatorManager::registerValidator($publicKey);
-            
-            if ($validator) {
-                // Store IP address in validator data
-                $validator->setIpAddress($ipAddress);
-                
-                return [
-                    'success' => true,
-                    'message' => 'Wallet submitted as validator',
-                    'data' => $validator->toArray(),
-                    'ipaddress' => $ipAddress,
-                    'collateral_required' => Validator::getCollateralAmount()
-                ];
-            }
-            
             return [
-                'success' => false,
-                'error' => 'Failed to submit wallet as validator'
+                'success' => true,
+                'message' => 'Wallet submitted as validator',
+                'data' => $result['validator'],
+                'ipaddress' => $ipAddress,
+                'collateral_required' => Validator::getCollateralAmount()
             ];
         } catch (\Exception $e) {
             Logger::error('Failed to submit wallet as validator', ['error' => $e->getMessage()]);
