@@ -7,6 +7,15 @@ namespace Composer\Autoload;
 class ComposerStaticInit88d4d1ac99775d4c8db49a7535abc604
 {
     public static $prefixLengthsPsr4 = array (
+        'E' =>
+        array (
+            'Elliptic\\' => 9,
+        ),
+        'B' =>
+        array (
+            'BN\\' => 3,
+            'BI\\' => 3,
+        ),
         'A' =>
         array (
             'App\\' => 4,
@@ -14,6 +23,18 @@ class ComposerStaticInit88d4d1ac99775d4c8db49a7535abc604
     );
 
     public static $prefixDirsPsr4 = array (
+        'Elliptic\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/simplito/elliptic-php/lib',
+        ),
+        'BN\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/simplito/bn-php/lib',
+        ),
+        'BI\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/simplito/bigint-wrapper-php/lib',
+        ),
         'App\\' =>
         array (
             0 => __DIR__ . '/../..' . '/src',

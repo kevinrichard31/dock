@@ -6,5 +6,8 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
+    'Elliptic\\' => array($vendorDir . '/simplito/elliptic-php/lib'),
+    'BN\\' => array($vendorDir . '/simplito/bn-php/lib'),
+    'BI\\' => array($vendorDir . '/simplito/bigint-wrapper-php/lib'),
     'App\\' => array($baseDir . '/src'),
 );

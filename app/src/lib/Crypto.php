@@ -2,8 +2,76 @@
 
 namespace App\Lib;
 
+use Elliptic\EC;
+
 class Crypto
 {
+    /**
+     * Generate a new private/public key pair using secp256k1
+     */
+    public static function generateKeys(): array
+    {
+        $ec = new EC('secp256k1');
+        $key = $ec->genKeyPair();
+        
+        $privateKey = $key->getPrivate('hex');
+        $publicKeyUncompressed = $key->getPublic('hex');
+        $publicKey = self::compressPublicKey($publicKeyUncompressed);
+
+        return [
+            'private' => $privateKey,
+            'public' => $publicKey
+        ];
+    }
+
+    /**
+     * Compress a public key from uncompressed to compressed format
+     * Uncompressed: 04 + X + Y (130 chars)
+     * Compressed: 02/03 + X (66 chars)
+     */
+    public static function compressPublicKey(string $publicKeyUncompressed): string
+    {
+        if (strlen($publicKeyUncompressed) !== 130) {
+            return $publicKeyUncompressed;
+        }
+
+        $x = substr($publicKeyUncompressed, 2, 64);
+        $y = substr($publicKeyUncompressed, 66, 64);
+
+        // Check if Y is even or odd
+        $yLast = hexdec(substr($y, -1));
+        $prefix = ($yLast % 2 === 0) ? '02' : '03';
+
+        return $prefix . $x;
+    }
+
+    /**
+     * Save keys to files
+     */
+    public static function saveKeys(array $keys, string $path): void
+    {
+        if (!is_dir($path)) {
+            mkdir($path, 0755, true);
+        }
+        file_put_contents($path . '/private_key.hex', $keys['private']);
+        file_put_contents($path . '/public_key.hex', $keys['public']);
+    }
+
+    /**
+     * Load keys from files
+     */
+    public static function loadKeys(string $path): array
+    {
+        if (!is_dir($path) || !file_exists($path . '/private_key.hex') || !file_exists($path . '/public_key.hex')) {
+            return [];
+        }
+
+        return [
+            'private' => file_get_contents($path . '/private_key.hex'),
+            'public' => file_get_contents($path . '/public_key.hex')
+        ];
+    }
+
     /**
      * Generate a SHA-256 hash
      */

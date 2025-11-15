@@ -6,6 +6,7 @@ RUN apk add --no-cache \
     libjpeg-turbo-dev \
     freetype-dev \
     libzip-dev \
+    gmp-dev \
     zip \
     unzip \
     git \
@@ -21,7 +22,8 @@ RUN docker-php-ext-install -j$(nproc) \
     pdo \
     pdo_mysql \
     mysqli \
-    zip
+    zip \
+    gmp
 
 # Install XDebug
 RUN pecl install xdebug && docker-php-ext-enable xdebug

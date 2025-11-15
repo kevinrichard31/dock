@@ -3,3 +3,4 @@
 .DS_Store
 *.log
 mariadb_data/
+app/vendor

@@ -12,9 +12,11 @@
 namespace App\Init;
 
 use App\Config\Database;
+use App\Modules\Block\Block;
 use App\Modules\Block\BlockChain;
 use App\Modules\Wallet\Wallet;
 use App\Lib\Logger;
+use App\Lib\Crypto;
 use PDO;
 
 class InitBlocks
@@ -36,6 +38,20 @@ class InitBlocks
 
             Logger::info('Creating Genesis Block with system wallet...');
             
+            // Chemin pour sauvegarder les clés
+            $keysPath = __DIR__ . '/../../keys';
+
+            // Générer et sauvegarder les clés si elles n'existent pas
+            $keys = Crypto::loadKeys($keysPath);
+            if (empty($keys)) {
+                Logger::info('Generating new system keys...');
+                $keys = Crypto::generateKeys();
+                Crypto::saveKeys($keys, $keysPath);
+                Logger::success('System keys generated and saved.', ['path' => $keysPath]);
+            } else {
+                Logger::info('System keys loaded from file.');
+            }
+
             $db = Database::getInstance()->getConnection();
             
             // Créer l'utilisateur système s'il n'existe pas
@@ -57,9 +73,10 @@ class InitBlocks
                 'type' => 'genesis_allocation',
                 'description' => 'Initial coin allocation',
                 'total_supply' => 1000000,
+                'public_key' => $keys['public'],
                 'allocations' => [
                     [
-                        'recipient' => 'SYSTEM',
+                        'recipient' => $keys['public'],
                         'amount' => 1000000,
                         'type' => 'system_reserve'
                     ]
@@ -67,8 +84,9 @@ class InitBlocks
             ];
             
             // Créer le bloc de départ avec les données d'allocation (Proof of Stake)
-            $genesisBlock = BlockChain::createGenesisBlock();
-            // Ajouter les données d'allocation au bloc
+            $genesisBlock = new Block(0, '0', [$allocationData]);
+            
+            // Sauvegarder le bloc
             $genesisBlock->save();
 
             Logger::success('Genesis Block created successfully', [
