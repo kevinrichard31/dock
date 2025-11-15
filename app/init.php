@@ -21,6 +21,8 @@ require_once __DIR__ . '/src/init/01_blocks.php';
 require_once __DIR__ . '/src/init/02_wallets_sync.php';
 require_once __DIR__ . '/src/init/03_validators_init.php';
 require_once __DIR__ . '/src/init/04_validators_sync.php';
+require_once __DIR__ . '/src/init/05_transactions_add_to_queue.php';
+require_once __DIR__ . '/src/init/06_queue_process.php';
 
 use App\Config\Database;
 use App\Lib\Logger;
@@ -30,6 +32,8 @@ use App\Init\InitWalletsSync;
 use App\Init\InitWallets;
 use App\Init\InitValidators;
 use App\Init\InitValidatorsSync;
+use App\Init\InitTransactionsAddToQueue;
+use App\Init\InitQueueProcess;
 
 // Initialize logger
 Logger::init();
@@ -51,6 +55,8 @@ try {
         ['class' => InitWalletsSync::class, 'name' => 'Wallets Sync'],
         ['class' => InitValidators::class, 'name' => 'Validators Init'],
         ['class' => InitValidatorsSync::class, 'name' => 'Validators Sync'],
+        ['class' => InitTransactionsAddToQueue::class, 'name' => 'Transactions Add to Queue'],
+        ['class' => InitQueueProcess::class, 'name' => 'Queue Process'],
     ];
 
     foreach ($steps as $step) {

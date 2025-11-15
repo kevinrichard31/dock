@@ -115,6 +115,28 @@ class InitReset
                     INDEX idx_public_key (public_key),
                     INDEX idx_status (status),
                     INDEX idx_is_approved (is_approved)
+                )",
+                
+                // Transactions Queue table
+                "CREATE TABLE IF NOT EXISTS queue (
+                    id INT PRIMARY KEY AUTO_INCREMENT,
+                    transaction_id INT NOT NULL,
+                    from_address VARCHAR(255) NOT NULL,
+                    to_address VARCHAR(255) NOT NULL,
+                    amount DECIMAL(20, 8) NOT NULL,
+                    hash VARCHAR(255) NOT NULL UNIQUE,
+                    status ENUM('pending', 'processing', 'completed', 'failed') NOT NULL DEFAULT 'pending',
+                    block_index INT,
+                    timestamp INT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    FOREIGN KEY (transaction_id) REFERENCES transactions(id),
+                    FOREIGN KEY (block_index) REFERENCES blocks(index_num),
+                    INDEX idx_transaction_id (transaction_id),
+                    INDEX idx_status (status),
+                    INDEX idx_from (from_address),
+                    INDEX idx_to (to_address),
+                    INDEX idx_hash (hash)
                 )"
             ];
             
