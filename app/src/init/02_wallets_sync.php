@@ -65,8 +65,8 @@ class InitWalletsSync
                             }
                         }
 
-                        // Traiter les transactions normales (from/to)
-                        if ($transaction['type'] === 'transfer' && isset($transaction['from'], $transaction['to'], $transaction['amount'])) {
+                        // Traiter les transactions normales (from/to) - type 'transaction' ou 'transfer'
+                        if (($transaction['type'] === 'transaction' || $transaction['type'] === 'transfer') && isset($transaction['from'], $transaction['to'], $transaction['amount'])) {
                             $from = $transaction['from'];
                             $to = $transaction['to'];
                             $amount = $transaction['amount'];
@@ -81,9 +81,10 @@ class InitWalletsSync
                             $walletBalances[$from] -= $amount;
                             $walletBalances[$to] += $amount;
 
-                            Logger::info('Transfer processed', [
-                                'from' => $from,
-                                'to' => $to,
+                            Logger::info('Transaction processed', [
+                                'type' => $transaction['type'],
+                                'from' => substr($from, 0, 20) . '...',
+                                'to' => substr($to, 0, 20) . '...',
                                 'amount' => $amount
                             ]);
                         }

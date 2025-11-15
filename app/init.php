@@ -18,6 +18,7 @@ require_once __DIR__ . '/vendor/autoload.php';
 // Load init files manually
 require_once __DIR__ . '/src/init/00_reset.php';
 require_once __DIR__ . '/src/init/01_blocks.php';
+require_once __DIR__ . '/src/init/01_5_simulation.php';
 require_once __DIR__ . '/src/init/02_wallets_sync.php';
 require_once __DIR__ . '/src/init/03_validators_init.php';
 require_once __DIR__ . '/src/init/04_validators_sync.php';
@@ -28,6 +29,7 @@ use App\Config\Database;
 use App\Lib\Logger;
 use App\Init\InitReset;
 use App\Init\InitBlocks;
+use App\Init\InitSimulation;
 use App\Init\InitWalletsSync;
 use App\Init\InitWallets;
 use App\Init\InitValidators;
@@ -52,6 +54,7 @@ try {
     $steps = [
         ['class' => InitReset::class, 'name' => 'Reset'],
         ['class' => InitBlocks::class, 'name' => 'Blocks'],
+        ['class' => InitSimulation::class, 'name' => 'Simulation'],
         ['class' => InitWalletsSync::class, 'name' => 'Wallets Sync'],
         ['class' => InitValidators::class, 'name' => 'Validators Init'],
         ['class' => InitValidatorsSync::class, 'name' => 'Validators Sync'],
