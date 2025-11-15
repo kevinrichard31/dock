@@ -59,7 +59,7 @@ class ValidatorSignatureHelper
         $canonical = [
             'type' => $registrationData['type'] ?? '',
             'public_key' => $registrationData['public_key'] ?? '',
-            'ip' => $registrationData['ip'] ?? '',
+            'ip_address' => $registrationData['ip_address'] ?? '',
             'collateral' => $registrationData['collateral'] ?? 0
         ];
 
@@ -71,13 +71,13 @@ class ValidatorSignatureHelper
      * Add validator IP and signature to registration data
      * Convenience method that combines IP retrieval and signing
      */
-    public static function prepareRegistration(array $baseData, string $privateKey, string $ip = null): array
+    public static function prepareRegistration(array $baseData, string $privateKey, string $ipAddress = null): array
     {
         $registrationData = $baseData;
 
         // Add IP if not present
-        if (!isset($registrationData['ip'])) {
-            $registrationData['ip'] = $ip ?? self::myPublicIp();
+        if (!isset($registrationData['ip_address'])) {
+            $registrationData['ip_address'] = $ipAddress ?? self::myPublicIp();
         }
 
         // Sign the registration

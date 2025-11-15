@@ -119,7 +119,6 @@ class ValidatorAPI
                 return [
                     'success' => false,
                     'error' => 'Validator already registered',
-                    'status' => $validator->getStatus(),
                     'approved' => $validator->isApproved()
                 ];
             }

@@ -75,7 +75,7 @@ class ValidatorManager
     public static function getValidatorsByCollateral(?int $limit = null): array
     {
         $db = Database::getInstance()->getConnection();
-        $sql = "SELECT * FROM validators WHERE status = 'active' ORDER BY collateral DESC";
+        $sql = "SELECT * FROM validators ORDER BY collateral DESC";
         
         if ($limit) {
             $sql .= " LIMIT " . intval($limit);
@@ -129,7 +129,6 @@ class ValidatorManager
     {
         $validator = self::getValidator($publicKey);
         if ($validator) {
-            $validator->setStatus('inactive');
             return $validator->save();
         }
         return false;
@@ -157,10 +156,11 @@ class ValidatorManager
     public static function countByStatus(string $status): int
     {
         $db = Database::getInstance()->getConnection();
-        $sql = "SELECT COUNT(*) as count FROM validators WHERE status = :status";
+        $sql = "SELECT COUNT(*) as count FROM validators WHERE is_approved = :is_approved";
         
         $stmt = $db->prepare($sql);
-        $stmt->execute([':status' => $status]);
+        $isApproved = ($status === 'approved') ? 1 : 0;
+        $stmt->execute([':is_approved' => $isApproved]);
         
         return (int)$stmt->fetch(PDO::FETCH_ASSOC)['count'];
     }
