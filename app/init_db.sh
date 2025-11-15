@@ -1,0 +1,64 @@
+#!/bin/sh
+mysql -u root -proot_password app_db << 'EOF'
+USE app_db;
+
+CREATE TABLE IF NOT EXISTS users (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS blocks (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    index_num INT NOT NULL UNIQUE,
+    hash VARCHAR(255) NOT NULL UNIQUE,
+    previous_hash VARCHAR(255) NOT NULL,
+    timestamp INT NOT NULL,
+    merkle_root VARCHAR(255) NOT NULL,
+    nonce INT NOT NULL DEFAULT 0,
+    difficulty INT NOT NULL DEFAULT 4,
+    data LONGTEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_index (index_num),
+    INDEX idx_hash (hash),
+    INDEX idx_previous_hash (previous_hash)
+);
+
+CREATE TABLE IF NOT EXISTS wallets (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL UNIQUE,
+    address VARCHAR(50) NOT NULL UNIQUE,
+    public_key VARCHAR(255) NOT NULL,
+    private_key VARCHAR(255) NOT NULL,
+    balance DECIMAL(20, 8) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    INDEX idx_address (address),
+    INDEX idx_balance (balance)
+);
+
+CREATE TABLE IF NOT EXISTS transactions (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    from_address VARCHAR(50) NOT NULL,
+    to_address VARCHAR(50) NOT NULL,
+    amount DECIMAL(20, 8) NOT NULL,
+    hash VARCHAR(255) NOT NULL UNIQUE,
+    block_index INT,
+    timestamp INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (block_index) REFERENCES blocks(index_num),
+    INDEX idx_from (from_address),
+    INDEX idx_to (to_address),
+    INDEX idx_block (block_index),
+    INDEX idx_timestamp (timestamp)
+);
+
+INSERT INTO users (username, email, password_hash) VALUES
+('alice', 'alice@example.com', SHA2('password123', 256)),
+('bob', 'bob@example.com', SHA2('password123', 256)),
+('charlie', 'charlie@example.com', SHA2('password123', 256));
+EOF
