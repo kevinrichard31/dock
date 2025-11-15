@@ -2,6 +2,8 @@
 
 namespace App\Lib;
 
+use App\Lib\Logger;
+
 /**
  * Helper class for validator registration signature verification
  * Ensures validator registrations are properly signed by their private key
@@ -36,17 +38,29 @@ class ValidatorSignatureHelper
     public static function verifyRegistration(array $registrationData): bool
     {
         if (empty($registrationData['signature']) || empty($registrationData['public_key'])) {
+            Logger::debug('verifyRegistration: missing signature or public_key');
             return false;
         }
 
-        $signature = $registrationData['signature'];
-        $publicKey = $registrationData['public_key'];
+        try {
+            Logger::debug('verifyRegistration: starting verification');
+            $signature = $registrationData['signature'];
+            $publicKey = $registrationData['public_key'];
 
-        // Create canonical data to verify (exclude signature and description)
-        $dataToVerify = self::getCanonicalData($registrationData);
+            Logger::debug('verifyRegistration: getting canonical data');
+            // Create canonical data to verify (exclude signature and description)
+            $dataToVerify = self::getCanonicalData($registrationData);
+            Logger::debug('verifyRegistration: canonical data obtained');
 
-        // Verify the signature
-        return Crypto::verifySignature($dataToVerify, $signature, $publicKey);
+            Logger::debug('verifyRegistration: calling Crypto::verifySignature');
+            // Verify the signature
+            $isValid = Crypto::verifySignature($dataToVerify, $signature, $publicKey);
+            Logger::debug('verifyRegistration: verification result', ['valid' => $isValid]);
+            return $isValid;
+        } catch (\Exception $e) {
+            Logger::debug('verifyRegistration: exception caught', ['error' => $e->getMessage()]);
+            return false;
+        }
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Lib;
 
 use Elliptic\EC;
+use App\Lib\Logger;
 
 class Crypto
 {
@@ -176,13 +177,7 @@ class Crypto
     public static function verifySignature(string $message, string $signature, string $publicKey): bool
     {
         try {
-            $ec = new EC('secp256k1');
-            $key = $ec->keyFromPublic($publicKey, 'hex');
-            
-            // Hash the message
-            $hash = self::hash($message);
-            
-            // Split signature into r and s
+            // Split signature into r and s first
             if (strlen($signature) !== 128) {
                 return false;
             }
@@ -190,15 +185,19 @@ class Crypto
             $r = substr($signature, 0, 64);
             $s = substr($signature, 64, 64);
             
-            // Create signature object
-            $signatureObj = $ec->signature([
-                'r' => $r,
-                's' => $s
-            ]);
+            $ec = new EC('secp256k1');
+            $key = $ec->keyFromPublic($publicKey, 'hex');
             
-            // Verify the signature (Elliptic expects hex string)
-            return $key->verify($hash, $signatureObj);
+            // Hash the message
+            $hash = self::hash($message);
+            
+            // Use the verify method with r and s as array - avoid using $ec->signature()
+            // which appears to have a bug that causes infinite loop
+            $result = $key->verify($hash, ['r' => $r, 's' => $s]);
+            
+            return $result;
         } catch (\Exception $e) {
+            Logger::debug('verifySignature: exception', ['error' => $e->getMessage()]);
             return false;
         }
     }
