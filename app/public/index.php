@@ -10,6 +10,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use App\Modules\Home\Views\HomeViewRouter;
 use App\Modules\Block\Views\BlockViewRouter;
 use App\Modules\Wallet\Views\WalletViewRouter;
+use App\Modules\Validator\Views\ValidatorViewRouter;
 
 // Get the requested path
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
@@ -23,6 +24,8 @@ if (empty($path) || $path === '') {
     echo BlockViewRouter::route('/blocks');
 } elseif ($path === 'wallets' || $path === 'wallets/') {
     echo WalletViewRouter::route('/wallets');
+} elseif ($path === 'validators' || $path === 'validators/') {
+    echo ValidatorViewRouter::route(['action' => 'list']);
 } else {
     // 404 Not Found
     http_response_code(404);

@@ -6,6 +6,8 @@ use App\Modules\Block\BlockRouter;
 use App\Modules\Block\BlockAPI;
 use App\Modules\Wallet\WalletRouter;
 use App\Modules\Wallet\WalletAPI;
+use App\Modules\Validator\ValidatorRouter;
+use App\Modules\Validator\ValidatorAPI;
 use App\Modules\Init\Api\InitRouter;
 
 class Router
@@ -35,6 +37,10 @@ class Router
             } elseif (WalletRouter::matches($this->path)) {
                 $router = new WalletRouter($this->method, $this->path);
                 return $router->route();
+            } elseif (strpos($this->path, 'validator') === 0) {
+                // Handle validator API requests
+                $params = $this->parseRequest();
+                return ValidatorRouter::route($params);
             } elseif ($this->path === 'stats' || $this->path === '') {
                 return $this->getStats();
             } else {
@@ -49,6 +55,10 @@ class Router
                         'GET /api/wallets',
                         'GET /api/wallets/{address}',
                         'GET /api/wallets/{address}/balance',
+                        'GET /api/validator/get_all',
+                        'GET /api/validator/get_approved',
+                        'GET /api/validator/get_pending',
+                        'GET /api/validator/stats',
                         'POST /api/init - Run full initialization',
                         'POST /api/init/blocks - Initialize blockchain',
                         'POST /api/init/wallets - Initialize wallets'
@@ -65,6 +75,23 @@ class Router
     }
 
     /**
+     * Parse request parameters
+     */
+    private function parseRequest(): array
+    {
+        $params = $_GET;
+        
+        if ($this->method === 'POST') {
+            $body = file_get_contents('php://input');
+            if ($body) {
+                $params = array_merge($params, (array)json_decode($body, true));
+            }
+        }
+        
+        return $params;
+    }
+
+    /**
      * Get combined stats
      */
     private function getStats(): array
@@ -72,7 +99,8 @@ class Router
         return [
             'status' => 'success',
             'blockchain' => BlockAPI::getStats(),
-            'wallets' => WalletAPI::getStats()
+            'wallets' => WalletAPI::getStats(),
+            'validators' => ValidatorAPI::getStats()
         ];
     }
 }

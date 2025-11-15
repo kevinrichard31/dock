@@ -11,25 +11,31 @@ class HomeController
             'modules' => [
                 [
                     'name' => 'Blockchain',
-                    'icon' => '',
+                    'icon' => '⛓️',
                     'description' => 'Visualiser la blockchain et les blocs minés',
                     'link' => '/blocks'
                 ],
                 [
                     'name' => 'Wallets',
-                    'icon' => '',
+                    'icon' => '💰',
                     'description' => 'Gérer les portefeuilles et les adresses',
                     'link' => '/wallets'
                 ],
                 [
+                    'name' => 'Validators',
+                    'icon' => '🔐',
+                    'description' => 'Gérer les validateurs et le Proof of Stake',
+                    'link' => '/validators'
+                ],
+                [
                     'name' => 'Transactions',
-                    'icon' => '',
+                    'icon' => '📝',
                     'description' => 'Historique des transactions',
                     'link' => '/transactions'
                 ],
                 [
                     'name' => 'Stats',
-                    'icon' => '',
+                    'icon' => '📊',
                     'description' => 'Statistiques système',
                     'link' => '/api/stats'
                 ]

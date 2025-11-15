@@ -19,6 +19,8 @@ require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/src/init/00_reset.php';
 require_once __DIR__ . '/src/init/01_blocks.php';
 require_once __DIR__ . '/src/init/02_wallets_sync.php';
+require_once __DIR__ . '/src/init/03_validators_init.php';
+require_once __DIR__ . '/src/init/04_validators_sync.php';
 
 use App\Config\Database;
 use App\Lib\Logger;
@@ -26,6 +28,8 @@ use App\Init\InitReset;
 use App\Init\InitBlocks;
 use App\Init\InitWalletsSync;
 use App\Init\InitWallets;
+use App\Init\InitValidators;
+use App\Init\InitValidatorsSync;
 
 // Initialize logger
 Logger::init();
@@ -45,6 +49,8 @@ try {
         ['class' => InitReset::class, 'name' => 'Reset'],
         ['class' => InitBlocks::class, 'name' => 'Blocks'],
         ['class' => InitWalletsSync::class, 'name' => 'Wallets Sync'],
+        ['class' => InitValidators::class, 'name' => 'Validators Init'],
+        ['class' => InitValidatorsSync::class, 'name' => 'Validators Sync'],
     ];
 
     foreach ($steps as $step) {

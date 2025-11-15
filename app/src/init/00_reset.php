@@ -101,6 +101,20 @@ class InitReset
                     INDEX idx_to (to_address),
                     INDEX idx_block (block_index),
                     INDEX idx_timestamp (timestamp)
+                )",
+                
+                // Validators table (Proof of Stake - collateral required)
+                "CREATE TABLE IF NOT EXISTS validators (
+                    id INT PRIMARY KEY AUTO_INCREMENT,
+                    public_key VARCHAR(255) NOT NULL UNIQUE,
+                    collateral DECIMAL(20, 8) NOT NULL DEFAULT 10000,
+                    status ENUM('active', 'inactive', 'slashed') NOT NULL DEFAULT 'active',
+                    is_approved INT NOT NULL DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_public_key (public_key),
+                    INDEX idx_status (status),
+                    INDEX idx_is_approved (is_approved)
                 )"
             ];
             
