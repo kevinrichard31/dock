@@ -208,18 +208,18 @@
                         <div class="wallet-balance"><?php echo number_format($wallet['balance'], 2); ?></div>
 
                         <div class="address-box">
-                            <div class="address-label">Adresse Publique</div>
-                            <div class="address-value"><?php echo $wallet['address']; ?></div>
+                            <div class="address-label">Clé Publique</div>
+                            <div class="address-value"><?php echo $wallet['public_key']; ?></div>
                         </div>
 
                         <div class="wallet-stats">
                             <div class="stat">
                                 <div class="stat-value"><?php echo strlen($wallet['public_key']); ?></div>
-                                <div class="stat-label">Clé Publique</div>
+                                <div class="stat-label">Caractères</div>
                             </div>
                             <div class="stat">
-                                <div class="stat-value">✓</div>
-                                <div class="stat-label">Actif</div>
+                                <div class="stat-value">secp256k1</div>
+                                <div class="stat-label">Algo</div>
                             </div>
                         </div>
                     </div>

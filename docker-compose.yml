@@ -27,10 +27,16 @@ services:
     environment:
       - MYSQL_HOST=mariadb
       - MYSQL_PORT=3306
+      - XDEBUG_MODE=debug
+      - XDEBUG_CLIENT_HOST=host.docker.internal
+      - XDEBUG_CLIENT_PORT=9003
+      - XDEBUG_IDEKEY=vscode
     depends_on:
       - mariadb
     networks:
       - dock-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   mariadb:
     container_name: dock_mariadb

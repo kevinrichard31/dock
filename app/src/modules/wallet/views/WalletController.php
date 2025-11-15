@@ -17,8 +17,8 @@ class WalletController
             $sql = "SELECT 
                         w.id,
                         w.user_id,
-                        w.address,
                         w.public_key,
+                        w.private_key,
                         w.balance,
                         w.created_at
                     FROM wallets w

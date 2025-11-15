@@ -24,8 +24,7 @@ class BlockController
                         'previous_hash' => $block->getPreviousHash(),
                         'timestamp' => $block->getTimestamp(),
                         'merkle_root' => $block->getMerkleRoot(),
-                        'nonce' => $block->getNonce(),
-                        'difficulty' => $block->getDifficulty(),
+                        'validator_address' => $block->getValidatorAddress(),
                         'transactions_count' => count($block->getTransactions()),
                         'data' => json_encode($block->getTransactions())
                     ];
