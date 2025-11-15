@@ -2,9 +2,9 @@
 
 namespace App\API;
 
-use App\Modules\Block\BlockRouter;
+use App\Modules\Block\Api\BlockRouter;
 use App\Modules\Block\BlockAPI;
-use App\Modules\Wallet\WalletRouter;
+use App\Modules\Wallet\Api\WalletRouter;
 use App\Modules\Wallet\WalletAPI;
 use App\Modules\Validator\ValidatorRouter;
 use App\Modules\Validator\Api\ValidatorAPI;
