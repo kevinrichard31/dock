@@ -132,6 +132,15 @@ class Wallet
     }
 
     /**
+     * Set balance (replace current balance)
+     */
+    public function setBalance(float $amount): self
+    {
+        $this->balance = $amount;
+        return $this;
+    }
+
+    /**
      * Subtract balance
      */
     public function subtractBalance(float $amount): bool

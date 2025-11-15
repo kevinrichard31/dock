@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Listen for XDebug",
+            "type": "php",
+            "request": "launch",
+            "port": 9003,
+            "runtimeArgs": [
+                "-dxdebug.mode=debug",
+                "-dxdebug.start_with_request=yes"
+            ],
+            "serverReadyAction": {
+                "pattern": "Development Server \\(http://localhost:\\d+\\) started",
+                "uriFormat": "http://localhost:%s/app",
+                "action": "openExternally"
+            }
+        }
+    ]
+}

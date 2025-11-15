@@ -200,13 +200,8 @@
                             </div>
 
                             <div class="detail-item">
-                                <div class="detail-label">Nonce</div>
-                                <div class="detail-value"><?php echo $block['nonce']; ?></div>
-                            </div>
-
-                            <div class="detail-item">
-                                <div class="detail-label">Difficulté</div>
-                                <div class="detail-value"><?php echo $block['difficulty']; ?></div>
+                                <div class="detail-label">Validateur</div>
+                                <div class="detail-value"><?php echo $block['validator_address'] ? substr($block['validator_address'], 0, 10) . '...' : 'Genesis'; ?></div>
                             </div>
 
                             <div class="detail-item">
@@ -217,8 +212,8 @@
 
                         <div class="block-stats">
                             <div class="stat">
-                                <div class="stat-value"><?php echo $block['nonce']; ?></div>
-                                <div class="stat-label">Iterations PoW</div>
+                                <div class="stat-value">Proof of Stake</div>
+                                <div class="stat-label">Consensus</div>
                             </div>
                             <div class="stat">
                                 <div class="stat-value"><?php echo strlen($block['data'] ?? '') . ' bytes'; ?></div>

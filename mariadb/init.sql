@@ -6,14 +6,13 @@ USE app_db;
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    username VARCHAR(100) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Blockchain blocks table
+-- Blockchain blocks table (Proof of Stake)
 CREATE TABLE IF NOT EXISTS blocks (
     id INT PRIMARY KEY AUTO_INCREMENT,
     index_num INT NOT NULL UNIQUE,
@@ -21,13 +20,13 @@ CREATE TABLE IF NOT EXISTS blocks (
     previous_hash VARCHAR(255) NOT NULL,
     timestamp INT NOT NULL,
     merkle_root VARCHAR(255) NOT NULL,
-    nonce INT NOT NULL DEFAULT 0,
-    difficulty INT NOT NULL DEFAULT 4,
+    validator_address VARCHAR(50),
     data LONGTEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_index (index_num),
     INDEX idx_hash (hash),
-    INDEX idx_previous_hash (previous_hash)
+    INDEX idx_previous_hash (previous_hash),
+    INDEX idx_validator (validator_address)
 );
 
 -- Wallets table (synchronized with blockchain)
@@ -63,7 +62,7 @@ CREATE TABLE IF NOT EXISTS transactions (
 );
 
 -- Initial users (for demo)
-INSERT INTO users (username, email, password_hash) VALUES
-('alice', 'alice@example.com', SHA2('password123', 256)),
-('bob', 'bob@example.com', SHA2('password123', 256)),
-('charlie', 'charlie@example.com', SHA2('password123', 256));
+INSERT INTO users (name, email) VALUES
+('Alice', 'alice@example.com'),
+('Bob', 'bob@example.com'),
+('Charlie', 'charlie@example.com');

@@ -6,6 +6,7 @@ use App\Modules\Block\BlockRouter;
 use App\Modules\Block\BlockAPI;
 use App\Modules\Wallet\WalletRouter;
 use App\Modules\Wallet\WalletAPI;
+use App\Modules\Init\Api\InitRouter;
 
 class Router
 {
@@ -26,7 +27,9 @@ class Router
     {
         try {
             // Route to appropriate module router
-            if (BlockRouter::matches($this->path)) {
+            if (InitRouter::matches($this->path)) {
+                return InitRouter::route($this->path);
+            } elseif (BlockRouter::matches($this->path)) {
                 $router = new BlockRouter($this->method, $this->path);
                 return $router->route();
             } elseif (WalletRouter::matches($this->path)) {
@@ -45,7 +48,10 @@ class Router
                         'GET /api/blocks/{index}',
                         'GET /api/wallets',
                         'GET /api/wallets/{address}',
-                        'GET /api/wallets/{address}/balance'
+                        'GET /api/wallets/{address}/balance',
+                        'POST /api/init - Run full initialization',
+                        'POST /api/init/blocks - Initialize blockchain',
+                        'POST /api/init/wallets - Initialize wallets'
                     ]
                 ];
             }

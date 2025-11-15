@@ -1,6 +1,6 @@
 FROM php:8.2-fpm-alpine
 
-# Install required extensions
+# Install required extensions and dev tools
 RUN apk add --no-cache \
     libpng-dev \
     libjpeg-turbo-dev \
@@ -10,7 +10,9 @@ RUN apk add --no-cache \
     unzip \
     git \
     curl \
-    mysql-client
+    mysql-client \
+    linux-headers \
+    $PHPIZE_DEPS
 
 # Install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg
@@ -20,6 +22,16 @@ RUN docker-php-ext-install -j$(nproc) \
     pdo_mysql \
     mysqli \
     zip
+
+# Install XDebug
+RUN pecl install xdebug && docker-php-ext-enable xdebug
+
+# Configure XDebug
+RUN echo "xdebug.mode=debug" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
+    echo "xdebug.start_with_request=yes" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
+    echo "xdebug.client_host=host.docker.internal" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
+    echo "xdebug.client_port=9003" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
+    echo "xdebug.log=/tmp/xdebug.log" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer

@@ -18,6 +18,16 @@ class WalletManager
     }
 
     /**
+     * Create system wallet (user_id = 0)
+     */
+    public static function createSystemWallet(): Wallet
+    {
+        $wallet = new Wallet(0); // user_id = 0 for system
+        $wallet->save();
+        return $wallet;
+    }
+
+    /**
      * Get user wallet
      */
     public static function getUserWallet(int $userId): ?Wallet

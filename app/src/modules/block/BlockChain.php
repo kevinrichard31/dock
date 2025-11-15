@@ -8,11 +8,9 @@ use PDO;
 class BlockChain
 {
     private array $chain = [];
-    private int $difficulty = 4;
 
-    public function __construct(int $difficulty = 4)
+    public function __construct()
     {
-        $this->difficulty = $difficulty;
         $this->loadFromDatabase();
     }
 
@@ -40,16 +38,15 @@ class BlockChain
     }
 
     /**
-     * Add a new block to the chain
+     * Add a new block to the chain (Proof of Stake)
      */
-    public function addBlock(array $transactions): Block
+    public function addBlock(array $transactions, ?string $validatorAddress = null): Block
     {
         $previousBlock = $this->getLatestBlock();
         $previousHash = $previousBlock ? $previousBlock->getHash() : '0';
         $index = count($this->chain);
 
-        $block = new Block($index, $previousHash, $transactions, $this->difficulty);
-        $block->mineBlock();
+        $block = new Block($index, $previousHash, $transactions, $validatorAddress);
 
         if ($block->save()) {
             $this->chain[] = $block;
@@ -105,7 +102,7 @@ class BlockChain
     }
 
     /**
-     * Create genesis block
+     * Create genesis block (Proof of Stake)
      */
     public static function createGenesisBlock(): Block
     {
@@ -113,7 +110,7 @@ class BlockChain
             0,
             '0',
             [['type' => 'genesis', 'data' => 'Genesis Block']],
-            4
+            null // No validator for genesis
         );
     }
 
@@ -130,7 +127,7 @@ class BlockChain
         return [
             'length' => $this->getLength(),
             'totalTransactions' => $totalTransactions,
-            'difficulty' => $this->difficulty,
+            'consensus' => 'Proof of Stake',
             'isValid' => $this->isValid()
         ];
     }
